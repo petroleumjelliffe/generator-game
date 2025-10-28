@@ -15,6 +15,7 @@ export interface GameConfig {
   gridHeight: number;
   orderConfig: OrderConfig;
   spawnInterval: number; // milliseconds between spawns
+  startingScore?: number; // optional starting score
 }
 
 export class GameEngine extends EventEmitter {
@@ -41,6 +42,11 @@ export class GameEngine extends EventEmitter {
     this.craftingSystem = new CraftingSystem(this.gridSystem, this.recipeManager);
     this.orderSystem = new OrderSystem(config.orderConfig);
     this.scoringSystem = new ScoringSystem();
+
+    // Set starting score if provided
+    if (config.startingScore && config.startingScore > 0) {
+      this.scoringSystem.addScore(config.startingScore);
+    }
   }
 
   // Initialization
@@ -136,6 +142,23 @@ export class GameEngine extends EventEmitter {
 
     this.gridSystem.setCell(emptyCell.position, rawMaterial.id, false);
     this.emit('material:spawned', { position: emptyCell.position, materialId: rawMaterial.id });
+    this.emit('grid:updated', this.gridSystem.getGrid());
+    return true;
+  }
+
+  unlockCell(position: GridPosition, cost: number = 50): boolean {
+    // Check if cell is locked
+    if (!this.gridSystem.isCellLocked(position)) return false;
+
+    // Check if player can afford
+    if (!this.scoringSystem.canAfford(cost)) return false;
+
+    // Spend points and unlock
+    if (!this.scoringSystem.spendPoints(cost)) return false;
+    if (!this.gridSystem.unlockCell(position)) return false;
+
+    this.emit('cell:unlocked', { position, cost });
+    this.emit('score:changed', this.scoringSystem.getScore());
     this.emit('grid:updated', this.gridSystem.getGrid());
     return true;
   }

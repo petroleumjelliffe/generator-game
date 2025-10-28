@@ -129,6 +129,38 @@ body {
   user-select: none;
 }
 
+.grid-cell-locked {
+  background-color: #1a1a1a;
+  border: 2px solid #2a2a2a;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.grid-cell-locked.can-afford {
+  border-color: #4a4a4a;
+}
+
+.grid-cell-locked.can-afford:hover {
+  background-color: #2a2a2a;
+  border-color: #ffd700;
+  transform: scale(1.05);
+}
+
+.grid-cell-locked.cannot-afford {
+  opacity: 0.5;
+}
+
+.lock-icon {
+  font-size: 2rem;
+  opacity: 0.6;
+}
+
+.unlock-cost {
+  font-size: 0.75rem;
+  color: #ffd700;
+  font-weight: bold;
+}
+
 .sidebar {
   width: 300px;
   background-color: #2a2a2a;

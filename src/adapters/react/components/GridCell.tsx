@@ -7,11 +7,14 @@ interface GridCellProps {
   onDragStart: (cell: GridCellType) => void;
   onDragOver: (e: React.DragEvent) => void;
   onDrop: (cell: GridCellType) => void;
+  onUnlock: (cell: GridCellType) => void;
+  unlockCost: number;
+  canAfford: boolean;
 }
 
-export function GridCell({ cell, material, onDragStart, onDragOver, onDrop }: GridCellProps) {
+export function GridCell({ cell, material, onDragStart, onDragOver, onDrop, onUnlock, unlockCost, canAfford }: GridCellProps) {
   const handleDragStart = (e: React.DragEvent) => {
-    if (cell.materialId && !cell.inUse) {
+    if (cell.materialId && !cell.inUse && !cell.locked) {
       e.dataTransfer.effectAllowed = 'move';
       e.dataTransfer.setData('application/json', JSON.stringify(cell));
       onDragStart(cell);
@@ -20,8 +23,32 @@ export function GridCell({ cell, material, onDragStart, onDragOver, onDrop }: Gr
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    onDrop(cell);
+    if (!cell.locked) {
+      onDrop(cell);
+    }
   };
+
+  const handleClick = () => {
+    if (cell.locked && canAfford) {
+      onUnlock(cell);
+    }
+  };
+
+  if (cell.locked) {
+    return (
+      <div
+        className={`grid-cell grid-cell-locked ${canAfford ? 'can-afford' : 'cannot-afford'}`}
+        onClick={handleClick}
+        title={canAfford ? `Unlock for ${unlockCost} points` : `Locked (need ${unlockCost} points)`}
+        style={{
+          cursor: canAfford ? 'pointer' : 'not-allowed',
+        }}
+      >
+        <div className="lock-icon">🔒</div>
+        <div className="unlock-cost">{unlockCost}</div>
+      </div>
+    );
+  }
 
   return (
     <div

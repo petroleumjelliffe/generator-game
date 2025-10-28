@@ -10,6 +10,9 @@ interface GridProps {
 
 export function Grid({ grid, engine }: GridProps) {
   const [draggedCell, setDraggedCell] = useState<GridCellType | null>(null);
+  const unlockCost = 50;
+  const currentScore = engine.getScore();
+  const canAfford = currentScore >= unlockCost;
 
   const handleDragStart = (cell: GridCellType) => {
     setDraggedCell(cell);
@@ -30,6 +33,10 @@ export function Grid({ grid, engine }: GridProps) {
     setDraggedCell(null);
   };
 
+  const handleUnlock = (cell: GridCellType) => {
+    engine.unlockCell(cell.position, unlockCost);
+  };
+
   return (
     <div className="grid-container">
       <div
@@ -48,6 +55,9 @@ export function Grid({ grid, engine }: GridProps) {
             onDragStart={handleDragStart}
             onDragOver={handleDragOver}
             onDrop={handleDrop}
+            onUnlock={handleUnlock}
+            unlockCost={unlockCost}
+            canAfford={canAfford}
           />
         ))}
       </div>
