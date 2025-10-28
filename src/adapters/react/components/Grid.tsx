@@ -26,6 +26,13 @@ export function Grid({ grid, engine }: GridProps) {
   const handleDrop = (targetCell: GridCellType) => {
     if (!draggedCell) return;
 
+    // Prevent dropping onto the same cell
+    if (draggedCell.position.x === targetCell.position.x &&
+        draggedCell.position.y === targetCell.position.y) {
+      setDraggedCell(null);
+      return;
+    }
+
     // Try to craft
     const positions = [draggedCell.position, targetCell.position];
     engine.startCrafting(positions);

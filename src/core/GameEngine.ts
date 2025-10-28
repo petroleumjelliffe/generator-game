@@ -92,7 +92,13 @@ export class GameEngine extends EventEmitter {
 
     // Generate new orders if needed
     while (this.orderSystem.getOrders().length < this.config.orderConfig.maxActiveOrders) {
-      const craftableMaterials = this.materialManager.getAllMaterials().filter(m => m.type !== 'raw');
+      // Only generate orders for materials that can be crafted with unlocked recipes
+      const unlockedRecipes = this.recipeManager.getUnlockedRecipes();
+      const craftableMaterialIds = new Set(unlockedRecipes.map(r => r.output.materialId));
+      const craftableMaterials = this.materialManager.getAllMaterials().filter(m =>
+        craftableMaterialIds.has(m.id)
+      );
+
       const order = this.orderSystem.generateOrder(craftableMaterials, this.gameTime);
       if (order) {
         this.emit('order:added', order);
