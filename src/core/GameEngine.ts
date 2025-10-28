@@ -163,6 +163,22 @@ export class GameEngine extends EventEmitter {
     return true;
   }
 
+  unlockRecipe(recipeId: string): boolean {
+    const recipe = this.recipeManager.getRecipe(recipeId);
+    if (!recipe || recipe.unlocked) return false;
+
+    // Check if player can afford
+    if (!this.scoringSystem.canAfford(recipe.cost)) return false;
+
+    // Spend points and unlock
+    if (!this.scoringSystem.spendPoints(recipe.cost)) return false;
+    if (!this.recipeManager.unlockRecipe(recipeId)) return false;
+
+    this.emit('recipe:unlocked', { recipeId, cost: recipe.cost });
+    this.emit('score:changed', this.scoringSystem.getScore());
+    return true;
+  }
+
   // State access
   getState(): Readonly<GameState> {
     return {

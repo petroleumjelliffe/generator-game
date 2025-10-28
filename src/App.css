@@ -201,4 +201,48 @@ body {
 
 .recipe-output {
   font-weight: bold;
+  flex: 1;
+}
+
+.recipe-locked {
+  opacity: 0.6;
+  border: 2px solid #2a2a2a;
+  position: relative;
+}
+
+.recipe-locked.recipe-can-afford {
+  border-color: #4a4a4a;
+}
+
+.recipe-locked.recipe-can-afford:hover {
+  opacity: 1;
+  background-color: #4a4a4a;
+  border-color: #ffd700;
+  transform: scale(1.02);
+}
+
+.recipe-locked.recipe-cannot-afford {
+  opacity: 0.4;
+}
+
+.recipe-unlocked {
+  border: 2px solid #4a4a4a;
+}
+
+.recipe-lock {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: auto;
+}
+
+.lock-emoji {
+  font-size: 1rem;
+  opacity: 0.7;
+}
+
+.recipe-cost {
+  font-size: 0.75rem;
+  color: #ffd700;
+  font-weight: bold;
 }

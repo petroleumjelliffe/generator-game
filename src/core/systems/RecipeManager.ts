@@ -23,12 +23,21 @@ export class RecipeManager {
     return this.getAllRecipes().filter(recipe => recipe.unlocked);
   }
 
+  getLockedRecipes(): Recipe[] {
+    return this.getAllRecipes().filter(recipe => !recipe.unlocked);
+  }
+
   unlockRecipe(id: string): boolean {
     const recipe = this.recipes.get(id);
-    if (!recipe) return false;
+    if (!recipe || recipe.unlocked) return false;
 
     recipe.unlocked = true;
     return true;
+  }
+
+  isRecipeLocked(id: string): boolean {
+    const recipe = this.recipes.get(id);
+    return recipe?.unlocked === false;
   }
 
   findRecipeByInputs(materialIds: string[]): Recipe | null {

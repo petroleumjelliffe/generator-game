@@ -29,4 +29,18 @@ export const materials: Material[] = [
     tier: 3,
     icon: '🪑',
   },
+    {
+    id: 'shack',
+    name: 'Shack',
+    type: 'product',
+    tier: 4,
+    icon: '🏚️',
+  },
+    {
+    id: 'house',
+    name: 'House',
+    type: 'product',
+    tier: 5,
+    icon: '🏠',
+  },
 ];

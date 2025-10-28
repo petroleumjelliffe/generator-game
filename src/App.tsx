@@ -22,7 +22,7 @@ function App() {
           <Grid grid={gameState.grid} engine={engine} />
         </div>
         <div className="sidebar">
-          <RecipeBook recipes={engine.getRecipes()} engine={engine} />
+          <RecipeBook recipes={engine.getRecipes()} engine={engine} currentScore={gameState.score} />
         </div>
       </div>
     </div>

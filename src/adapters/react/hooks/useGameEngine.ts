@@ -12,7 +12,7 @@ const defaultConfig: GameConfig = {
     baseReward: 10,
   },
   spawnInterval: 3000, // 3 seconds
-  startingScore: 100, // Start with 100 points to unlock cells
+  startingScore: 0, // Start with 0 points
 };
 
 export function useGameEngine(config: GameConfig = defaultConfig) {
