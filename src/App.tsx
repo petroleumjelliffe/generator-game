@@ -15,7 +15,14 @@ function App() {
     <div className="app">
       <div className="top-bar">
         <div className="score">Score: {gameState.score}</div>
-        <OrderList orders={gameState.orders} engine={engine} />
+        <OrderList
+          orders={gameState.orders}
+          engine={engine}
+          unlockedSlots={gameState.unlockedOrderSlots}
+          maxSlots={gameState.maxOrderSlots}
+          slotCost={30}
+          currentScore={gameState.score}
+        />
       </div>
       <div className="main-content">
         <div className="game-area">

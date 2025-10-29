@@ -8,11 +8,13 @@ interface GridCellProps {
   onDragOver: (e: React.DragEvent) => void;
   onDrop: (cell: GridCellType) => void;
   onUnlock: (cell: GridCellType) => void;
+  onTap: (cell: GridCellType) => void;
+  tapCount: number;
   unlockCost: number;
   canAfford: boolean;
 }
 
-export function GridCell({ cell, material, onDragStart, onDragOver, onDrop, onUnlock, unlockCost, canAfford }: GridCellProps) {
+export function GridCell({ cell, material, onDragStart, onDragOver, onDrop, onUnlock, onTap, tapCount, unlockCost, canAfford }: GridCellProps) {
   const handleDragStart = (e: React.DragEvent) => {
     if (cell.materialId && !cell.inUse && !cell.locked) {
       e.dataTransfer.effectAllowed = 'move';
@@ -31,6 +33,9 @@ export function GridCell({ cell, material, onDragStart, onDragOver, onDrop, onUn
   const handleClick = () => {
     if (cell.locked && canAfford) {
       onUnlock(cell);
+    } else if (!cell.locked && !cell.materialId && !cell.inUse) {
+      // Empty unlocked cell - tap to spawn
+      onTap(cell);
     }
   };
 
@@ -57,14 +62,20 @@ export function GridCell({ cell, material, onDragStart, onDragOver, onDrop, onUn
       onDragStart={handleDragStart}
       onDragOver={onDragOver}
       onDrop={handleDrop}
+      onClick={handleClick}
       style={{
         opacity: cell.inUse ? 0.5 : 1,
-        cursor: cell.materialId && !cell.inUse ? 'grab' : 'default',
+        cursor: cell.materialId && !cell.inUse ? 'grab' : (!cell.locked && !cell.materialId ? 'pointer' : 'default'),
       }}
     >
       {material && (
         <div className="material-icon" title={material.name}>
           {material.icon}
+        </div>
+      )}
+      {!cell.locked && !cell.materialId && !cell.inUse && tapCount > 0 && (
+        <div className="tap-progress">
+          {tapCount}/5
         </div>
       )}
     </div>

@@ -4,19 +4,21 @@ import { Material } from '../types/Material';
 export interface OrderConfig {
   maxActiveOrders: number;
   baseReward: number;
+  orderSlotCost: number; // cost to unlock each additional order slot
 }
 
 export class OrderSystem {
   private orders: Order[] = [];
   private nextOrderId = 0;
   private config: OrderConfig;
+  private unlockedSlots: number = 1; // start with 1 unlocked slot
 
   constructor(config: OrderConfig) {
     this.config = config;
   }
 
   generateOrder(availableMaterials: Material[], currentTime: number): Order | null {
-    if (this.orders.length >= this.config.maxActiveOrders) {
+    if (this.orders.length >= this.unlockedSlots) {
       return null;
     }
 
@@ -71,6 +73,24 @@ export class OrderSystem {
     if (index === -1) return false;
 
     this.orders.splice(index, 1);
+    return true;
+  }
+
+  getUnlockedSlots(): number {
+    return this.unlockedSlots;
+  }
+
+  getMaxSlots(): number {
+    return this.config.maxActiveOrders;
+  }
+
+  canUnlockSlot(): boolean {
+    return this.unlockedSlots < this.config.maxActiveOrders;
+  }
+
+  unlockSlot(): boolean {
+    if (!this.canUnlockSlot()) return false;
+    this.unlockedSlots++;
     return true;
   }
 }

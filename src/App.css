@@ -83,6 +83,42 @@ body {
   color: #ffd700;
 }
 
+.order-empty {
+  background-color: #2a2a2a;
+  border: 2px dashed #3a3a3a;
+  opacity: 0.5;
+  justify-content: center;
+}
+
+.order-empty-text {
+  color: #666;
+  font-size: 0.875rem;
+}
+
+.order-locked {
+  background-color: #1a1a1a;
+  border: 2px solid #2a2a2a;
+  opacity: 0.5;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.order-locked.can-afford {
+  border-color: #4a4a4a;
+  opacity: 0.7;
+}
+
+.order-locked.can-afford:hover {
+  background-color: #2a2a2a;
+  border-color: #ffd700;
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+.order-locked.cannot-afford {
+  opacity: 0.3;
+}
+
 .main-content {
   flex: 1;
   display: flex;
@@ -118,6 +154,7 @@ body {
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
+  position: relative;
 }
 
 .grid-cell:hover {
@@ -127,6 +164,18 @@ body {
 .material-icon {
   font-size: 3rem;
   user-select: none;
+}
+
+.tap-progress {
+  position: absolute;
+  bottom: 0.25rem;
+  right: 0.25rem;
+  background-color: rgba(255, 215, 0, 0.8);
+  color: #1a1a1a;
+  font-size: 0.75rem;
+  font-weight: bold;
+  padding: 0.125rem 0.25rem;
+  border-radius: 3px;
 }
 
 .grid-cell-locked {

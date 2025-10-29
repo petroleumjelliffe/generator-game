@@ -9,4 +9,6 @@ export interface GameState {
   score: number;
   knownRecipes: string[]; // recipe IDs
   time: number; // game time in milliseconds
+  unlockedOrderSlots: number; // number of unlocked order slots
+  maxOrderSlots: number; // total possible order slots
 }

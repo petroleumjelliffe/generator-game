@@ -45,7 +45,7 @@ export class CraftingSystem {
       startTime: currentTime,
       duration: recipe.duration,
       sourcePositions: positions,
-      outputPosition: positions[0], // Place result at first input position
+      outputPosition: positions[positions.length - 1], // Place result at last position (drop target)
     };
 
     this.craftingJobs.push(job);

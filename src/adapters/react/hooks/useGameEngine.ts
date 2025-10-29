@@ -10,6 +10,7 @@ const defaultConfig: GameConfig = {
   orderConfig: {
     maxActiveOrders: 4,
     baseReward: 10,
+    orderSlotCost: 30, // User can adjust
   },
   spawnInterval: 3000, // 3 seconds
   startingScore: 0, // Start with 0 points

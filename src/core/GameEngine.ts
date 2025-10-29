@@ -152,6 +152,16 @@ export class GameEngine extends EventEmitter {
     return true;
   }
 
+  spawnMaterialAt(position: GridPosition, materialId: string): boolean {
+    // Check if position is valid and empty
+    if (!this.gridSystem.isCellAvailable(position)) return false;
+
+    this.gridSystem.setCell(position, materialId, false);
+    this.emit('material:spawned', { position, materialId });
+    this.emit('grid:updated', this.gridSystem.getGrid());
+    return true;
+  }
+
   unlockCell(position: GridPosition, cost: number = 50): boolean {
     // Check if cell is locked
     if (!this.gridSystem.isCellLocked(position)) return false;
@@ -185,6 +195,21 @@ export class GameEngine extends EventEmitter {
     return true;
   }
 
+  unlockOrderSlot(): boolean {
+    if (!this.orderSystem.canUnlockSlot()) return false;
+
+    const cost = this.config.orderConfig.orderSlotCost;
+    if (!this.scoringSystem.canAfford(cost)) return false;
+
+    // Spend points and unlock
+    if (!this.scoringSystem.spendPoints(cost)) return false;
+    if (!this.orderSystem.unlockSlot()) return false;
+
+    this.emit('orderslot:unlocked', { cost });
+    this.emit('score:changed', this.scoringSystem.getScore());
+    return true;
+  }
+
   // State access
   getState(): Readonly<GameState> {
     return {
@@ -194,6 +219,8 @@ export class GameEngine extends EventEmitter {
       score: this.scoringSystem.getScore(),
       knownRecipes: this.recipeManager.getUnlockedRecipes().map(r => r.id),
       time: this.gameTime,
+      unlockedOrderSlots: this.orderSystem.getUnlockedSlots(),
+      maxOrderSlots: this.orderSystem.getMaxSlots(),
     };
   }
 

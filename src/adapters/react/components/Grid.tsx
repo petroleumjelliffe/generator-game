@@ -10,6 +10,7 @@ interface GridProps {
 
 export function Grid({ grid, engine }: GridProps) {
   const [draggedCell, setDraggedCell] = useState<GridCellType | null>(null);
+  const [tapCounts, setTapCounts] = useState<Map<string, number>>(new Map());
   const unlockCost = 50;
   const currentScore = engine.getScore();
   const canAfford = currentScore >= unlockCost;
@@ -44,6 +45,33 @@ export function Grid({ grid, engine }: GridProps) {
     engine.unlockCell(cell.position, unlockCost);
   };
 
+  const handleTap = (cell: GridCellType) => {
+    const key = `${cell.position.x},${cell.position.y}`;
+    const currentTaps = tapCounts.get(key) || 0;
+    const newTaps = currentTaps + 1;
+
+    if (newTaps >= 5) {
+      // Spawn a seed
+      engine.spawnMaterialAt(cell.position, 'seed');
+      setTapCounts(prev => {
+        const newMap = new Map(prev);
+        newMap.delete(key);
+        return newMap;
+      });
+    } else {
+      setTapCounts(prev => {
+        const newMap = new Map(prev);
+        newMap.set(key, newTaps);
+        return newMap;
+      });
+    }
+  };
+
+  const getTapCount = (cell: GridCellType): number => {
+    const key = `${cell.position.x},${cell.position.y}`;
+    return tapCounts.get(key) || 0;
+  };
+
   return (
     <div className="grid-container">
       <div
@@ -63,6 +91,8 @@ export function Grid({ grid, engine }: GridProps) {
             onDragOver={handleDragOver}
             onDrop={handleDrop}
             onUnlock={handleUnlock}
+            onTap={handleTap}
+            tapCount={getTapCount(cell)}
             unlockCost={unlockCost}
             canAfford={canAfford}
           />
