@@ -41,6 +41,13 @@ export function OrderCard({ order, material, engine, onOrderClick }: OrderCardPr
     }
   };
 
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (onOrderClick) {
+      e.preventDefault(); // Prevent the delayed click event
+      onOrderClick(order);
+    }
+  };
+
   return (
     <div
       className={`order-card ${isDragOver ? 'drag-over' : ''}`}
@@ -48,6 +55,7 @@ export function OrderCard({ order, material, engine, onOrderClick }: OrderCardPr
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       onClick={handleClick}
+      onTouchEnd={handleTouchEnd}
       style={{
         cursor: onOrderClick ? 'pointer' : 'default',
       }}

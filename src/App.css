@@ -50,6 +50,7 @@ body {
   align-items: center;
   gap: 0.5rem;
   transition: all 0.2s;
+  touch-action: manipulation;
 }
 
 .order-card.drag-over {
@@ -155,6 +156,7 @@ body {
   justify-content: center;
   transition: all 0.2s;
   position: relative;
+  touch-action: manipulation;
 }
 
 .grid-cell:hover {
@@ -243,6 +245,7 @@ body {
   background-color: #3a3a3a;
   border-radius: 6px;
   font-size: 0.875rem;
+  touch-action: manipulation;
 }
 
 .recipe-inputs {

@@ -34,11 +34,17 @@ export function GridCell({ cell, material, onDragStart, onDragOver, onDrop, onCe
     onCellClick(cell);
   };
 
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    e.preventDefault(); // Prevent the delayed click event
+    onCellClick(cell);
+  };
+
   if (cell.locked) {
     return (
       <div
         className={`grid-cell grid-cell-locked ${canAfford ? 'can-afford' : 'cannot-afford'}`}
         onClick={handleClick}
+        onTouchEnd={handleTouchEnd}
         title={canAfford ? `Unlock for ${unlockCost} points` : `Locked (need ${unlockCost} points)`}
         style={{
           cursor: canAfford ? 'pointer' : 'not-allowed',
@@ -58,6 +64,7 @@ export function GridCell({ cell, material, onDragStart, onDragOver, onDrop, onCe
       onDragOver={onDragOver}
       onDrop={handleDrop}
       onClick={handleClick}
+      onTouchEnd={handleTouchEnd}
       style={{
         opacity: cell.inUse ? 0.5 : 1,
         cursor: cell.materialId && !cell.inUse ? 'pointer' : (!cell.locked && !cell.materialId ? 'pointer' : 'default'),

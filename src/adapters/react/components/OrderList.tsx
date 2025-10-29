@@ -18,6 +18,11 @@ export function OrderList({ orders, engine, unlockedSlots, maxSlots, slotCost, c
     engine.unlockOrderSlot();
   };
 
+  const handleUnlockSlotTouch = (e: React.TouchEvent) => {
+    e.preventDefault(); // Prevent the delayed click event
+    engine.unlockOrderSlot();
+  };
+
   // Create array of all slots (both filled and empty)
   const slots = [];
 
@@ -65,6 +70,7 @@ export function OrderList({ orders, engine, unlockedSlots, maxSlots, slotCost, c
               key={`locked-${index}`}
               className={`order-card order-locked ${isNextSlot && canAfford ? 'can-afford' : ''} ${isNextSlot && !canAfford ? 'cannot-afford' : ''}`}
               onClick={isNextSlot && canAfford ? handleUnlockSlot : undefined}
+              onTouchEnd={isNextSlot && canAfford ? handleUnlockSlotTouch : undefined}
               title={isNextSlot ? (canAfford ? `Unlock for ${slotCost} points` : `Locked (need ${slotCost} points)`) : 'Locked'}
               style={{
                 cursor: isNextSlot && canAfford ? 'pointer' : 'not-allowed',
