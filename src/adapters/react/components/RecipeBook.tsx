@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Recipe } from '../../../core/types/Recipe';
 import { GameEngine } from '../../../core/GameEngine';
 
@@ -8,16 +9,27 @@ interface RecipeBookProps {
 }
 
 export function RecipeBook({ recipes, engine, currentScore }: RecipeBookProps) {
+  const [isOpen, setIsOpen] = useState(true);
+
   const handleUnlock = (recipe: Recipe) => {
     if (!recipe.unlocked && currentScore >= recipe.cost) {
       engine.unlockRecipe(recipe.id);
     }
   };
 
+  const handleToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsOpen(!isOpen);
+  };
+
   return (
     <div className="recipe-book">
+      <div className="recipe-book-header" onClick={handleToggle}>
+        <h3>Recipes</h3>
+        <span className={`recipe-book-toggle ${isOpen ? 'open' : ''}`}>▼</span>
+      </div>
       <h3>Recipes</h3>
-      <div className="recipe-list">
+      <div className={`recipe-list ${!isOpen ? 'collapsed' : ''}`}>
         {recipes.map((recipe) => {
           const output = engine.getMaterial(recipe.output.materialId);
           const inputs = recipe.inputs.map(input => ({
