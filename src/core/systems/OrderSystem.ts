@@ -4,7 +4,8 @@ import { Material } from '../types/Material';
 export interface OrderConfig {
   maxActiveOrders: number;
   baseReward: number;
-  orderSlotCost: number; // cost to unlock each additional order slot
+  orderSlotBaseCost: number; // base cost for first order slot unlock
+  orderSlotCostMultiplier: number; // multiplier applied to previous cost
 }
 
 export class OrderSystem {
@@ -31,14 +32,11 @@ export class OrderSystem {
     // Pick random material
     const material = craftableMaterials[Math.floor(Math.random() * craftableMaterials.length)];
 
-    // Calculate reward based on tier
-    const reward = this.config.baseReward * (material.tier + 1);
-
     const order: Order = {
       id: `order-${this.nextOrderId++}`,
       materialId: material.id,
       quantity: 1, // Start with quantity 1 for simplicity
-      reward,
+      reward: material.reward,
       createdAt: currentTime,
     };
 
@@ -86,6 +84,17 @@ export class OrderSystem {
 
   canUnlockSlot(): boolean {
     return this.unlockedSlots < this.config.maxActiveOrders;
+  }
+
+  getNextSlotCost(): number {
+    // First unlock (slot 2) costs baseCost
+    // Each subsequent unlock multiplies by the multiplier
+    // unlockedSlots starts at 1, so:
+    // - Unlocking slot 2 (unlockedSlots=1): baseCost * multiplier^0 = baseCost
+    // - Unlocking slot 3 (unlockedSlots=2): baseCost * multiplier^1
+    // - Unlocking slot 4 (unlockedSlots=3): baseCost * multiplier^2
+    const unlockCount = this.unlockedSlots - 1; // 0-indexed unlock count
+    return Math.round(this.config.orderSlotBaseCost * Math.pow(this.config.orderSlotCostMultiplier, unlockCount));
   }
 
   unlockSlot(): boolean {

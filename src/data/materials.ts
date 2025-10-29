@@ -7,6 +7,7 @@ export const materials: Material[] = [
     type: 'raw',
     tier: 0,
     icon: '🌱',
+    reward: 0,
   },
   {
     id: 'tree',
@@ -14,6 +15,7 @@ export const materials: Material[] = [
     type: 'processed',
     tier: 1,
     icon: '🌳',
+    reward: 20,
   },
   {
     id: 'lumber',
@@ -21,6 +23,7 @@ export const materials: Material[] = [
     type: 'processed',
     tier: 2,
     icon: '🪵',
+    reward: 50,
   },
   {
     id: 'furniture',
@@ -28,6 +31,7 @@ export const materials: Material[] = [
     type: 'product',
     tier: 3,
     icon: '🪑',
+    reward: 100,
   },
     {
     id: 'shack',
@@ -35,6 +39,7 @@ export const materials: Material[] = [
     type: 'product',
     tier: 4,
     icon: '🏚️',
+    reward: 250,
   },
     {
     id: 'house',
@@ -42,5 +47,6 @@ export const materials: Material[] = [
     type: 'product',
     tier: 5,
     icon: '🏠',
+    reward: 500,
   },
 ];

@@ -30,7 +30,7 @@ function App() {
           engine={engine}
           unlockedSlots={gameState.unlockedOrderSlots}
           maxSlots={gameState.maxOrderSlots}
-          slotCost={30}
+          slotCost={engine.getNextOrderSlotCost()}
           currentScore={gameState.score}
           onOrderClick={handleOrderClick}
           hasSelection={!!selectedCell}

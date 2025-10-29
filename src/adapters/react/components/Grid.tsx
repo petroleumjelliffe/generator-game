@@ -13,7 +13,7 @@ interface GridProps {
 export function Grid({ grid, engine, selectedCell, onSelectedCellChange }: GridProps) {
   const [draggedCell, setDraggedCell] = useState<GridCellType | null>(null);
   const [tapCounts, setTapCounts] = useState<Map<string, number>>(new Map());
-  const unlockCost = 50;
+  const unlockCost = engine.getNextCellUnlockCost();
   const currentScore = engine.getScore();
   const canAfford = currentScore >= unlockCost;
 
@@ -44,7 +44,7 @@ export function Grid({ grid, engine, selectedCell, onSelectedCellChange }: GridP
   };
 
   const handleUnlock = (cell: GridCellType) => {
-    engine.unlockCell(cell.position, unlockCost);
+    engine.unlockCell(cell.position);
   };
 
   const handleCellClick = (cell: GridCellType) => {

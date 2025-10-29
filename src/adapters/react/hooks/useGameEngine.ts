@@ -10,10 +10,13 @@ const defaultConfig: GameConfig = {
   orderConfig: {
     maxActiveOrders: 4,
     baseReward: 10,
-    orderSlotCost: 30, // User can adjust
+    orderSlotBaseCost: 150, // Base cost for first order slot unlock
+    orderSlotCostMultiplier: 5, // Each unlock costs 1.5x the previous
   },
   spawnInterval: 3000, // 3 seconds
   startingScore: 0, // Start with 0 points
+  cellUnlockBaseCost: 50, // Base cost for first cell unlock
+  cellUnlockCostMultiplier: 1.2, // Each unlock costs 1.2x the previous
 };
 
 export function useGameEngine(config: GameConfig = defaultConfig) {

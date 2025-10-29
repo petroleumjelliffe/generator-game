@@ -16,6 +16,8 @@ export interface GameConfig {
   orderConfig: OrderConfig;
   spawnInterval: number; // milliseconds between spawns
   startingScore?: number; // optional starting score
+  cellUnlockBaseCost: number; // base cost for first cell unlock
+  cellUnlockCostMultiplier: number; // multiplier applied to previous cost
 }
 
 export class GameEngine extends EventEmitter {
@@ -30,6 +32,7 @@ export class GameEngine extends EventEmitter {
   private lastSpawnTime: number = 0;
   private config: GameConfig;
   private isRunning: boolean = false;
+  private cellsUnlocked: number = 0; // track number of cells unlocked
 
   constructor(config: GameConfig) {
     super();
@@ -162,9 +165,12 @@ export class GameEngine extends EventEmitter {
     return true;
   }
 
-  unlockCell(position: GridPosition, cost: number = 50): boolean {
+  unlockCell(position: GridPosition): boolean {
     // Check if cell is locked
     if (!this.gridSystem.isCellLocked(position)) return false;
+
+    // Calculate cost based on number of unlocks
+    const cost = this.getNextCellUnlockCost();
 
     // Check if player can afford
     if (!this.scoringSystem.canAfford(cost)) return false;
@@ -173,10 +179,18 @@ export class GameEngine extends EventEmitter {
     if (!this.scoringSystem.spendPoints(cost)) return false;
     if (!this.gridSystem.unlockCell(position)) return false;
 
+    this.cellsUnlocked++;
+
     this.emit('cell:unlocked', { position, cost });
     this.emit('score:changed', this.scoringSystem.getScore());
     this.emit('grid:updated', this.gridSystem.getGrid());
     return true;
+  }
+
+  getNextCellUnlockCost(): number {
+    // First unlock costs baseCost
+    // Each subsequent unlock multiplies by the multiplier
+    return Math.round(this.config.cellUnlockBaseCost * Math.pow(this.config.cellUnlockCostMultiplier, this.cellsUnlocked));
   }
 
   unlockRecipe(recipeId: string): boolean {
@@ -198,7 +212,7 @@ export class GameEngine extends EventEmitter {
   unlockOrderSlot(): boolean {
     if (!this.orderSystem.canUnlockSlot()) return false;
 
-    const cost = this.config.orderConfig.orderSlotCost;
+    const cost = this.orderSystem.getNextSlotCost();
     if (!this.scoringSystem.canAfford(cost)) return false;
 
     // Spend points and unlock
@@ -208,6 +222,10 @@ export class GameEngine extends EventEmitter {
     this.emit('orderslot:unlocked', { cost });
     this.emit('score:changed', this.scoringSystem.getScore());
     return true;
+  }
+
+  getNextOrderSlotCost(): number {
+    return this.orderSystem.getNextSlotCost();
   }
 
   // State access

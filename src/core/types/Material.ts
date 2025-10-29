@@ -4,4 +4,5 @@ export interface Material {
   type: 'raw' | 'processed' | 'product';
   tier: number;
   icon: string;
+  reward: number;
 }

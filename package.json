@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "homepage": "https://pete.github.io/generator-game",
+  "homepage": "https://petroleumjelliffe.github.io/generator-game",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
