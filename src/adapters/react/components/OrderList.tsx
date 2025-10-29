@@ -9,9 +9,11 @@ interface OrderListProps {
   maxSlots: number;
   slotCost: number;
   currentScore: number;
+  onOrderClick?: (orderId: string) => void;
+  hasSelection?: boolean;
 }
 
-export function OrderList({ orders, engine, unlockedSlots, maxSlots, slotCost, currentScore }: OrderListProps) {
+export function OrderList({ orders, engine, unlockedSlots, maxSlots, slotCost, currentScore, onOrderClick, hasSelection }: OrderListProps) {
   const handleUnlockSlot = () => {
     engine.unlockOrderSlot();
   };
@@ -46,6 +48,7 @@ export function OrderList({ orders, engine, unlockedSlots, maxSlots, slotCost, c
               order={slot.order!}
               material={engine.getMaterial(slot.order!.materialId)}
               engine={engine}
+              onOrderClick={hasSelection && onOrderClick ? () => onOrderClick(slot.order!.id) : undefined}
             />
           );
         } else if (slot.type === 'empty') {

@@ -6,9 +6,11 @@ import { GridCell } from './GridCell';
 interface GridProps {
   grid: GridState;
   engine: GameEngine;
+  selectedCell: GridCellType | null;
+  onSelectedCellChange: (cell: GridCellType | null) => void;
 }
 
-export function Grid({ grid, engine }: GridProps) {
+export function Grid({ grid, engine, selectedCell, onSelectedCellChange }: GridProps) {
   const [draggedCell, setDraggedCell] = useState<GridCellType | null>(null);
   const [tapCounts, setTapCounts] = useState<Map<string, number>>(new Map());
   const unlockCost = 50;
@@ -45,6 +47,42 @@ export function Grid({ grid, engine }: GridProps) {
     engine.unlockCell(cell.position, unlockCost);
   };
 
+  const handleCellClick = (cell: GridCellType) => {
+    // If cell is locked, handle unlocking
+    if (cell.locked && canAfford) {
+      handleUnlock(cell);
+      return;
+    }
+
+    // If cell is empty, handle tap-to-spawn
+    if (!cell.locked && !cell.materialId && !cell.inUse) {
+      handleTap(cell);
+      return;
+    }
+
+    // If cell has material, handle selection/crafting
+    if (cell.materialId && !cell.inUse) {
+      // If clicking the same cell, deselect
+      if (selectedCell &&
+          selectedCell.position.x === cell.position.x &&
+          selectedCell.position.y === cell.position.y) {
+        onSelectedCellChange(null);
+        return;
+      }
+
+      // If no cell selected, select this one
+      if (!selectedCell) {
+        onSelectedCellChange(cell);
+        return;
+      }
+
+      // If a cell is selected, try to craft
+      const positions = [selectedCell.position, cell.position];
+      engine.startCrafting(positions);
+      onSelectedCellChange(null);
+    }
+  };
+
   const handleTap = (cell: GridCellType) => {
     const key = `${cell.position.x},${cell.position.y}`;
     const currentTaps = tapCounts.get(key) || 0;
@@ -72,6 +110,12 @@ export function Grid({ grid, engine }: GridProps) {
     return tapCounts.get(key) || 0;
   };
 
+  const isSelected = (cell: GridCellType): boolean => {
+    return selectedCell !== null &&
+           selectedCell.position.x === cell.position.x &&
+           selectedCell.position.y === cell.position.y;
+  };
+
   return (
     <div className="grid-container">
       <div
@@ -90,11 +134,11 @@ export function Grid({ grid, engine }: GridProps) {
             onDragStart={handleDragStart}
             onDragOver={handleDragOver}
             onDrop={handleDrop}
-            onUnlock={handleUnlock}
-            onTap={handleTap}
+            onCellClick={handleCellClick}
             tapCount={getTapCount(cell)}
             unlockCost={unlockCost}
             canAfford={canAfford}
+            isSelected={isSelected(cell)}
           />
         ))}
       </div>

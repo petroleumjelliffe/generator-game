@@ -8,9 +8,10 @@ interface OrderCardProps {
   order: Order;
   material: Material | undefined;
   engine: GameEngine;
+  onOrderClick?: (order: Order) => void;
 }
 
-export function OrderCard({ order, material, engine }: OrderCardProps) {
+export function OrderCard({ order, material, engine, onOrderClick }: OrderCardProps) {
   const [isDragOver, setIsDragOver] = useState(false);
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -34,12 +35,22 @@ export function OrderCard({ order, material, engine }: OrderCardProps) {
     engine.fulfillOrder(order.id, cell.position);
   };
 
+  const handleClick = () => {
+    if (onOrderClick) {
+      onOrderClick(order);
+    }
+  };
+
   return (
     <div
       className={`order-card ${isDragOver ? 'drag-over' : ''}`}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
+      onClick={handleClick}
+      style={{
+        cursor: onOrderClick ? 'pointer' : 'default',
+      }}
     >
       <div className="order-icon">{material?.icon}</div>
       <div className="order-details">

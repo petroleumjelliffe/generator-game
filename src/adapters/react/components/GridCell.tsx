@@ -7,14 +7,14 @@ interface GridCellProps {
   onDragStart: (cell: GridCellType) => void;
   onDragOver: (e: React.DragEvent) => void;
   onDrop: (cell: GridCellType) => void;
-  onUnlock: (cell: GridCellType) => void;
-  onTap: (cell: GridCellType) => void;
+  onCellClick: (cell: GridCellType) => void;
   tapCount: number;
   unlockCost: number;
   canAfford: boolean;
+  isSelected: boolean;
 }
 
-export function GridCell({ cell, material, onDragStart, onDragOver, onDrop, onUnlock, onTap, tapCount, unlockCost, canAfford }: GridCellProps) {
+export function GridCell({ cell, material, onDragStart, onDragOver, onDrop, onCellClick, tapCount, unlockCost, canAfford, isSelected }: GridCellProps) {
   const handleDragStart = (e: React.DragEvent) => {
     if (cell.materialId && !cell.inUse && !cell.locked) {
       e.dataTransfer.effectAllowed = 'move';
@@ -31,12 +31,7 @@ export function GridCell({ cell, material, onDragStart, onDragOver, onDrop, onUn
   };
 
   const handleClick = () => {
-    if (cell.locked && canAfford) {
-      onUnlock(cell);
-    } else if (!cell.locked && !cell.materialId && !cell.inUse) {
-      // Empty unlocked cell - tap to spawn
-      onTap(cell);
-    }
+    onCellClick(cell);
   };
 
   if (cell.locked) {
@@ -57,7 +52,7 @@ export function GridCell({ cell, material, onDragStart, onDragOver, onDrop, onUn
 
   return (
     <div
-      className="grid-cell"
+      className={`grid-cell ${isSelected ? 'grid-cell-selected' : ''}`}
       draggable={!!cell.materialId && !cell.inUse}
       onDragStart={handleDragStart}
       onDragOver={onDragOver}
@@ -65,7 +60,7 @@ export function GridCell({ cell, material, onDragStart, onDragOver, onDrop, onUn
       onClick={handleClick}
       style={{
         opacity: cell.inUse ? 0.5 : 1,
-        cursor: cell.materialId && !cell.inUse ? 'grab' : (!cell.locked && !cell.materialId ? 'pointer' : 'default'),
+        cursor: cell.materialId && !cell.inUse ? 'pointer' : (!cell.locked && !cell.materialId ? 'pointer' : 'default'),
       }}
     >
       {material && (

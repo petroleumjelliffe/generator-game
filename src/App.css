@@ -161,6 +161,12 @@ body {
   background-color: #4a4a4a;
 }
 
+.grid-cell-selected {
+  background-color: #4a4a4a;
+  border-color: #ffd700;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
 .material-icon {
   font-size: 3rem;
   user-select: none;
