@@ -1,4 +1,4 @@
-import { CraftingJob, Recipe } from '../types/Recipe';
+import { CraftingJob } from '../types/Recipe';
 import { GridPosition } from '../types/Grid';
 import { GridSystem } from './GridSystem';
 import { RecipeManager } from './RecipeManager';

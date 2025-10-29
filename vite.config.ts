@@ -4,6 +4,7 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
+  base: '/generator-game/',
   resolve: {
     alias: {
       '@core': path.resolve(__dirname, './src/core'),
