@@ -2,9 +2,9 @@ import { Factory, FactoryType } from '../types/Factory';
 import { GridPosition } from '../types/Grid';
 import { GridSystem } from './GridSystem';
 
+// Config is no longer needed - costs are per factory type
 export interface FactoryConfig {
-  factoryBaseCost: number; // Base cost for first factory of any type
-  factoryCostMultiplier: number; // Cost multiplier for each additional factory
+  // Kept for backward compatibility but unused
 }
 
 interface SpawnResult {
@@ -17,11 +17,10 @@ export class FactorySystem {
   private factories: Map<string, Factory> = new Map();
   private factoryTypes: Map<string, FactoryType> = new Map();
   private nextFactoryId = 0;
-  private config: FactoryConfig;
   private factoryPurchaseCounts: Map<string, number> = new Map(); // Track purchases per type
 
-  constructor(config: FactoryConfig) {
-    this.config = config;
+  constructor(config?: FactoryConfig) {
+    // Config no longer used - costs are per factory type
   }
 
   // Load factory type definitions
@@ -33,10 +32,13 @@ export class FactorySystem {
     types.forEach(type => this.addFactoryType(type));
   }
 
-  // Factory cost calculation
+  // Factory cost calculation - uses per-type costs
   getFactoryCost(typeId: string): number {
+    const factoryType = this.factoryTypes.get(typeId);
+    if (!factoryType) return 0;
+
     const purchaseCount = this.factoryPurchaseCounts.get(typeId) || 0;
-    return Math.round(this.config.factoryBaseCost * Math.pow(this.config.factoryCostMultiplier, purchaseCount));
+    return Math.round(factoryType.baseCost * Math.pow(factoryType.costMultiplier, purchaseCount));
   }
 
   // Factory purchasing (any type)

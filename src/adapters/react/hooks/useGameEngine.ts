@@ -14,10 +14,7 @@ const defaultConfig: GameConfig = {
     orderSlotBaseCost: 150, // Base cost for first order slot unlock
     orderSlotCostMultiplier: 5, // Each unlock costs 5x the previous
   },
-  factoryConfig: {
-    factoryBaseCost: 50, // Base cost for first factory of any type
-    factoryCostMultiplier: 1.2, // Each additional factory costs 1.2x the previous
-  },
+  // factoryConfig removed - costs are now per factory type in factoryTypes.ts
   spawnInterval: 3000, // 3 seconds
   startingScore: 0, // Start with 0 points
   cellUnlockBaseCost: 50, // Base cost for first cell unlock

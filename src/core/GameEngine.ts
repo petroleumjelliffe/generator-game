@@ -16,7 +16,7 @@ export interface GameConfig {
   gridWidth: number;
   gridHeight: number;
   orderConfig: OrderConfig;
-  factoryConfig: FactoryConfig;
+  factoryConfig?: FactoryConfig; // Optional - costs are now per factory type
   spawnInterval: number; // milliseconds between spawns
   startingScore?: number; // optional starting score
   cellUnlockBaseCost: number; // base cost for first cell unlock
@@ -48,7 +48,7 @@ export class GameEngine extends EventEmitter {
     this.craftingSystem = new CraftingSystem(this.gridSystem, this.recipeManager);
     this.orderSystem = new OrderSystem(config.orderConfig);
     this.scoringSystem = new ScoringSystem();
-    this.factorySystem = new FactorySystem(config.factoryConfig);
+    this.factorySystem = new FactorySystem(); // No config needed - costs are per factory type
 
     // Set starting score if provided
     if (config.startingScore && config.startingScore > 0) {

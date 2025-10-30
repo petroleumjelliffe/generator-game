@@ -9,6 +9,8 @@ export interface FactoryType {
   tier: number;
   evolvesFrom: string | null; // typeId of factory this evolves from (2x required)
   evolvesInto: string | null; // typeId of factory this evolves into
+  baseCost: number; // Base cost for first factory of this type
+  costMultiplier: number; // Cost multiplier for each additional factory
 }
 
 export interface Factory {

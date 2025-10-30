@@ -10,6 +10,8 @@ export const factoryTypes: FactoryType[] = [
     tier: 1,
     evolvesFrom: null,
     evolvesInto: 'tree-farm',
+    baseCost: 750/1.2,
+    costMultiplier: 1.2,
   },
   {
     id: 'tree-farm',
@@ -20,6 +22,8 @@ export const factoryTypes: FactoryType[] = [
     tier: 2,
     evolvesFrom: 'garden',
     evolvesInto: 'sawmill',
+    baseCost: 1500,
+    costMultiplier: 1.25,
   },
   {
     id: 'sawmill',
@@ -30,6 +34,8 @@ export const factoryTypes: FactoryType[] = [
     tier: 3,
     evolvesFrom: 'tree-farm',
     evolvesInto: 'workshop',
+    baseCost: 3000,
+    costMultiplier: 1.3,
   },
   {
     id: 'workshop',
@@ -40,6 +46,8 @@ export const factoryTypes: FactoryType[] = [
     tier: 4,
     evolvesFrom: 'sawmill',
     evolvesInto: 'construction-site',
+    baseCost: 6000,
+    costMultiplier: 1.35,
   },
   {
     id: 'construction-site',
@@ -50,6 +58,8 @@ export const factoryTypes: FactoryType[] = [
     tier: 5,
     evolvesFrom: 'workshop',
     evolvesInto: 'housing-complex',
+    baseCost: 12000,
+    costMultiplier: 1.4,
   },
   {
     id: 'housing-complex',
@@ -60,5 +70,7 @@ export const factoryTypes: FactoryType[] = [
     tier: 6,
     evolvesFrom: 'construction-site',
     evolvesInto: null, // Max tier
+    baseCost: 24000,
+    costMultiplier: 1.5,
   },
 ];
