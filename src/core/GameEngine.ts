@@ -3,17 +3,20 @@ import { GameState } from './types/GameState';
 import { GridPosition } from './types/Grid';
 import { Material } from './types/Material';
 import { Recipe } from './types/Recipe';
+import { Factory, FactoryType } from './types/Factory';
 import { GridSystem } from './systems/GridSystem';
 import { MaterialManager } from './systems/MaterialManager';
 import { RecipeManager } from './systems/RecipeManager';
 import { CraftingSystem } from './systems/CraftingSystem';
 import { OrderSystem, OrderConfig } from './systems/OrderSystem';
 import { ScoringSystem } from './systems/ScoringSystem';
+import { FactorySystem, FactoryConfig } from './systems/FactorySystem';
 
 export interface GameConfig {
   gridWidth: number;
   gridHeight: number;
   orderConfig: OrderConfig;
+  factoryConfig: FactoryConfig;
   spawnInterval: number; // milliseconds between spawns
   startingScore?: number; // optional starting score
   cellUnlockBaseCost: number; // base cost for first cell unlock
@@ -27,6 +30,7 @@ export class GameEngine extends EventEmitter {
   private craftingSystem: CraftingSystem;
   private orderSystem: OrderSystem;
   private scoringSystem: ScoringSystem;
+  private factorySystem: FactorySystem;
 
   private gameTime: number = 0;
   private lastSpawnTime: number = 0;
@@ -45,6 +49,7 @@ export class GameEngine extends EventEmitter {
     this.craftingSystem = new CraftingSystem(this.gridSystem, this.recipeManager);
     this.orderSystem = new OrderSystem(config.orderConfig);
     this.scoringSystem = new ScoringSystem();
+    this.factorySystem = new FactorySystem(config.factoryConfig);
 
     // Set starting score if provided
     if (config.startingScore && config.startingScore > 0) {
@@ -59,6 +64,10 @@ export class GameEngine extends EventEmitter {
 
   loadRecipes(recipes: Recipe[]): void {
     this.recipeManager.addRecipes(recipes);
+  }
+
+  loadFactoryTypes(factoryTypes: FactoryType[]): void {
+    this.factorySystem.addFactoryTypes(factoryTypes);
   }
 
   start(): void {
@@ -85,6 +94,14 @@ export class GameEngine extends EventEmitter {
         this.emit('crafting:completed', { job, materialId });
         this.emit('grid:updated', this.gridSystem.getGrid());
       }
+    });
+
+    // Update factories (spawn materials)
+    const factorySpawns = this.factorySystem.updateFactories(this.gameTime, this.gridSystem);
+    factorySpawns.forEach(spawn => {
+      this.gridSystem.setCell(spawn.spawnPosition, spawn.materialId);
+      this.emit('factory:spawned', spawn);
+      this.emit('grid:updated', this.gridSystem.getGrid());
     });
 
     // Auto-spawn raw materials
@@ -228,6 +245,86 @@ export class GameEngine extends EventEmitter {
     return this.orderSystem.getNextSlotCost();
   }
 
+  // Factory management
+  unlockFactorySlot(): boolean {
+    if (!this.factorySystem.canUnlockSlot()) return false;
+
+    const cost = this.factorySystem.getNextSlotCost();
+    if (!this.scoringSystem.canAfford(cost)) return false;
+
+    if (!this.scoringSystem.spendPoints(cost)) return false;
+    if (!this.factorySystem.unlockSlot()) return false;
+
+    this.emit('factoryslot:unlocked', { cost });
+    this.emit('score:changed', this.scoringSystem.getScore());
+    return true;
+  }
+
+  getNextFactorySlotCost(): number {
+    return this.factorySystem.getNextSlotCost();
+  }
+
+  purchaseGarden(): Factory | null {
+    const cost = this.config.factoryConfig.gardenPurchaseCost;
+    if (!this.scoringSystem.canAfford(cost)) return null;
+
+    if (!this.scoringSystem.spendPoints(cost)) return null;
+
+    const factory = this.factorySystem.purchaseGarden();
+    if (!factory) return null;
+
+    this.emit('factory:purchased', { factory, cost });
+    this.emit('score:changed', this.scoringSystem.getScore());
+    return factory;
+  }
+
+  placeFactory(factoryId: string, position: GridPosition): boolean {
+    const success = this.factorySystem.placeFactory(factoryId, position, this.gridSystem);
+    if (success) {
+      this.emit('factory:placed', { factoryId, position });
+      this.emit('grid:updated', this.gridSystem.getGrid());
+    }
+    return success;
+  }
+
+  moveFactory(factoryId: string, position: GridPosition | null): boolean {
+    const success = this.factorySystem.moveFactory(factoryId, position, this.gridSystem);
+    if (success) {
+      this.emit('factory:moved', { factoryId, position });
+      this.emit('grid:updated', this.gridSystem.getGrid());
+    }
+    return success;
+  }
+
+  combineFactories(factory1Id: string, factory2Id: string): Factory | null {
+    const evolved = this.factorySystem.combineFactories(factory1Id, factory2Id, this.gridSystem);
+    if (evolved) {
+      this.emit('factory:combined', { factory1Id, factory2Id, evolved });
+      this.emit('grid:updated', this.gridSystem.getGrid());
+    }
+    return evolved;
+  }
+
+  getFactory(factoryId: string): Factory | null {
+    return this.factorySystem.getFactory(factoryId);
+  }
+
+  getFactoryAt(position: GridPosition): Factory | null {
+    return this.factorySystem.getFactoryAt(position);
+  }
+
+  getFactories(): Factory[] {
+    return this.factorySystem.getFactories();
+  }
+
+  getFactoryType(typeId: string): FactoryType | null {
+    return this.factorySystem.getFactoryType(typeId);
+  }
+
+  getFactoryProductionProgress(factoryId: string): number {
+    return this.factorySystem.getProductionProgress(factoryId, this.gameTime);
+  }
+
   // State access
   getState(): Readonly<GameState> {
     return {
@@ -239,6 +336,9 @@ export class GameEngine extends EventEmitter {
       time: this.gameTime,
       unlockedOrderSlots: this.orderSystem.getUnlockedSlots(),
       maxOrderSlots: this.orderSystem.getMaxSlots(),
+      factories: this.factorySystem.getFactories(),
+      unlockedFactorySlots: this.factorySystem.getUnlockedSlots(),
+      maxFactorySlots: this.factorySystem.getMaxSlots(),
     };
   }
 

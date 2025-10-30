@@ -23,6 +23,7 @@ export class GridSystem {
           materialId: null,
           inUse: false,
           locked: !isStartingCell,
+          factoryId: null,
         });
       }
     }
@@ -85,7 +86,7 @@ export class GridSystem {
 
   isCellAvailable(position: GridPosition): boolean {
     const cell = this.getCell(position);
-    return cell !== null && cell.materialId === null && !cell.inUse && !cell.locked;
+    return cell !== null && cell.materialId === null && !cell.inUse && !cell.locked && cell.factoryId === null;
   }
 
   isCellOccupied(position: GridPosition): boolean {
@@ -112,5 +113,24 @@ export class GridSystem {
 
   getUnlockedCells(): GridCell[] {
     return this.grid.cells.filter(cell => !cell.locked);
+  }
+
+  // Factory management
+  setFactoryAt(position: GridPosition, factoryId: string | null): boolean {
+    const cell = this.getCell(position);
+    if (!cell) return false;
+
+    cell.factoryId = factoryId;
+    return true;
+  }
+
+  getFactoryAt(position: GridPosition): string | null {
+    const cell = this.getCell(position);
+    return cell?.factoryId || null;
+  }
+
+  hasFactory(position: GridPosition): boolean {
+    const cell = this.getCell(position);
+    return cell !== null && cell.factoryId !== null;
   }
 }
