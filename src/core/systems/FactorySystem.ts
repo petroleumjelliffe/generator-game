@@ -3,10 +3,8 @@ import { GridPosition } from '../types/Grid';
 import { GridSystem } from './GridSystem';
 
 export interface FactoryConfig {
-  maxSlots: number;
-  slotBaseCost: number;
-  slotCostMultiplier: number;
-  gardenPurchaseCost: number;
+  factoryBaseCost: number; // Base cost for first factory of any type
+  factoryCostMultiplier: number; // Cost multiplier for each additional factory
 }
 
 interface SpawnResult {
@@ -20,7 +18,7 @@ export class FactorySystem {
   private factoryTypes: Map<string, FactoryType> = new Map();
   private nextFactoryId = 0;
   private config: FactoryConfig;
-  private unlockedSlots: number = 1;
+  private factoryPurchaseCounts: Map<string, number> = new Map(); // Track purchases per type
 
   constructor(config: FactoryConfig) {
     this.config = config;
@@ -35,49 +33,41 @@ export class FactorySystem {
     types.forEach(type => this.addFactoryType(type));
   }
 
-  // Slot management
-  getUnlockedSlots(): number {
-    return this.unlockedSlots;
+  // Factory cost calculation
+  getFactoryCost(typeId: string): number {
+    const purchaseCount = this.factoryPurchaseCounts.get(typeId) || 0;
+    return Math.round(this.config.factoryBaseCost * Math.pow(this.config.factoryCostMultiplier, purchaseCount));
   }
 
-  getMaxSlots(): number {
-    return this.config.maxSlots;
-  }
-
-  canUnlockSlot(): boolean {
-    return this.unlockedSlots < this.config.maxSlots;
-  }
-
-  getNextSlotCost(): number {
-    const unlockCount = this.unlockedSlots - 1; // 0-indexed
-    return Math.round(this.config.slotBaseCost * Math.pow(this.config.slotCostMultiplier, unlockCount));
-  }
-
-  unlockSlot(): boolean {
-    if (!this.canUnlockSlot()) return false;
-    this.unlockedSlots++;
-    return true;
-  }
-
-  // Factory purchasing (only Gardens)
-  purchaseGarden(): Factory | null {
-    const gardenType = this.factoryTypes.get('garden');
-    if (!gardenType) return null;
+  // Factory purchasing (any type)
+  purchaseFactory(typeId: string): Factory | null {
+    const factoryType = this.factoryTypes.get(typeId);
+    if (!factoryType) return null;
 
     const factory: Factory = {
       id: `factory-${this.nextFactoryId++}`,
-      typeId: 'garden',
-      position: null, // Starts in slot
+      typeId,
+      position: null, // Not placed yet
       lastProducedTime: 0,
       nextProduceTime: 0,
     };
 
     this.factories.set(factory.id, factory);
+
+    // Increment purchase count for this type
+    const currentCount = this.factoryPurchaseCounts.get(typeId) || 0;
+    this.factoryPurchaseCounts.set(typeId, currentCount + 1);
+
     return factory;
   }
 
+  // Legacy method for initial garden
+  purchaseGarden(): Factory | null {
+    return this.purchaseFactory('garden');
+  }
+
   // Factory placement and movement
-  placeFactory(factoryId: string, position: GridPosition, gridSystem: GridSystem): boolean {
+  placeFactory(factoryId: string, position: GridPosition, gridSystem: GridSystem, currentTime: number = 0): boolean {
     const factory = this.factories.get(factoryId);
     if (!factory) return false;
 
@@ -93,6 +83,15 @@ export class FactorySystem {
     // Place factory at new position
     factory.position = position;
     gridSystem.setFactoryAt(position, factoryId);
+
+    // Initialize production timer when first placed
+    if (factory.nextProduceTime === 0) {
+      const factoryType = this.factoryTypes.get(factory.typeId);
+      if (factoryType) {
+        factory.nextProduceTime = currentTime + factoryType.productionInterval;
+        factory.lastProducedTime = currentTime;
+      }
+    }
 
     return true;
   }

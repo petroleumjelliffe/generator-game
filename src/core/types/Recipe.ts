@@ -5,6 +5,7 @@ export interface Recipe {
   duration: number; // milliseconds, 0 for instant
   unlocked: boolean;
   cost: number; // points required to unlock this recipe
+  factoryTypeId?: string; // optional factory type that produces this material
 }
 
 export interface CraftingJob {

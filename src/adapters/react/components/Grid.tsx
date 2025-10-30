@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { GridState, GridCell as GridCellType } from '../../../core/types/Grid';
 import { GameEngine } from '../../../core/GameEngine';
+import { Factory, FactoryType } from '../../../core/types/Factory';
 import { GridCell } from './GridCell';
 
 interface GridProps {
@@ -8,14 +9,27 @@ interface GridProps {
   engine: GameEngine;
   selectedCell: GridCellType | null;
   onSelectedCellChange: (cell: GridCellType | null) => void;
+  pendingFactory: Factory | null;
+  pendingFactoryType: FactoryType | null;
+  onFactoryPlacement: (cell: GridCellType) => void;
+  onCancelPlacement: () => void;
 }
 
-export function Grid({ grid, engine, selectedCell, onSelectedCellChange }: GridProps) {
+export function Grid({ grid, engine, selectedCell, onSelectedCellChange, pendingFactory, pendingFactoryType, onFactoryPlacement, onCancelPlacement }: GridProps) {
   const [draggedCell, setDraggedCell] = useState<GridCellType | null>(null);
-  const [tapCounts, setTapCounts] = useState<Map<string, number>>(new Map());
+  const [, forceUpdate] = useState({});
   const unlockCost = engine.getNextCellUnlockCost();
   const currentScore = engine.getScore();
   const canAfford = currentScore >= unlockCost;
+
+  // Force re-render every 100ms to animate factory progress bars
+  useEffect(() => {
+    const interval = setInterval(() => {
+      forceUpdate({});
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const handleDragStart = (cell: GridCellType) => {
     setDraggedCell(cell);
@@ -26,7 +40,17 @@ export function Grid({ grid, engine, selectedCell, onSelectedCellChange }: GridP
     e.dataTransfer.dropEffect = 'move';
   };
 
-  const handleDrop = (targetCell: GridCellType) => {
+  const handleDrop = (targetCell: GridCellType, e: React.DragEvent) => {
+    // Check if we're dropping a factory from the factory list
+    const factoryId = e.dataTransfer?.getData('factoryId');
+    if (factoryId) {
+      // Placing a factory from slot onto grid
+      if (!targetCell.locked && !targetCell.factoryId && !targetCell.materialId) {
+        engine.placeFactory(factoryId, targetCell.position);
+      }
+      return;
+    }
+
     if (!draggedCell) return;
 
     // Prevent dropping onto the same cell
@@ -36,7 +60,26 @@ export function Grid({ grid, engine, selectedCell, onSelectedCellChange }: GridP
       return;
     }
 
-    // Try to craft
+    // Check if dragging a factory
+    if (draggedCell.factoryId) {
+      // If target has a factory of the same type, try to combine
+      if (targetCell.factoryId) {
+        const draggedFactory = engine.getFactory(draggedCell.factoryId);
+        const targetFactory = engine.getFactory(targetCell.factoryId);
+
+        if (draggedFactory && targetFactory && draggedFactory.typeId === targetFactory.typeId) {
+          engine.combineFactories(draggedCell.factoryId, targetCell.factoryId);
+        }
+      }
+      // Otherwise, move the factory to the target cell
+      else if (!targetCell.locked && !targetCell.materialId) {
+        engine.moveFactory(draggedCell.factoryId, targetCell.position);
+      }
+      setDraggedCell(null);
+      return;
+    }
+
+    // Try to craft with materials
     const positions = [draggedCell.position, targetCell.position];
     engine.startCrafting(positions);
 
@@ -48,15 +91,18 @@ export function Grid({ grid, engine, selectedCell, onSelectedCellChange }: GridP
   };
 
   const handleCellClick = (cell: GridCellType) => {
-    // If cell is locked, handle unlocking
-    if (cell.locked && canAfford) {
-      handleUnlock(cell);
+    // If in placement mode, try to place factory
+    if (pendingFactory) {
+      // Can only place on unlocked, empty cells
+      if (!cell.locked && !cell.materialId && !cell.factoryId) {
+        onFactoryPlacement(cell);
+      }
       return;
     }
 
-    // If cell is empty, handle tap-to-spawn
-    if (!cell.locked && !cell.materialId && !cell.inUse) {
-      handleTap(cell);
+    // If cell is locked, handle unlocking
+    if (cell.locked && canAfford) {
+      handleUnlock(cell);
       return;
     }
 
@@ -83,32 +129,6 @@ export function Grid({ grid, engine, selectedCell, onSelectedCellChange }: GridP
     }
   };
 
-  const handleTap = (cell: GridCellType) => {
-    const key = `${cell.position.x},${cell.position.y}`;
-    const currentTaps = tapCounts.get(key) || 0;
-    const newTaps = currentTaps + 1;
-
-    if (newTaps >= 5) {
-      // Spawn a seed
-      engine.spawnMaterialAt(cell.position, 'seed');
-      setTapCounts(prev => {
-        const newMap = new Map(prev);
-        newMap.delete(key);
-        return newMap;
-      });
-    } else {
-      setTapCounts(prev => {
-        const newMap = new Map(prev);
-        newMap.set(key, newTaps);
-        return newMap;
-      });
-    }
-  };
-
-  const getTapCount = (cell: GridCellType): number => {
-    const key = `${cell.position.x},${cell.position.y}`;
-    return tapCounts.get(key) || 0;
-  };
 
   const isSelected = (cell: GridCellType): boolean => {
     return selectedCell !== null &&
@@ -126,21 +146,32 @@ export function Grid({ grid, engine, selectedCell, onSelectedCellChange }: GridP
           gridTemplateRows: `repeat(${grid.height}, 1fr)`,
         }}
       >
-        {grid.cells.map((cell) => (
-          <GridCell
-            key={`${cell.position.x}-${cell.position.y}`}
-            cell={cell}
-            material={cell.materialId ? engine.getMaterial(cell.materialId) : undefined}
-            onDragStart={handleDragStart}
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-            onCellClick={handleCellClick}
-            tapCount={getTapCount(cell)}
-            unlockCost={unlockCost}
-            canAfford={canAfford}
-            isSelected={isSelected(cell)}
-          />
-        ))}
+        {grid.cells.map((cell) => {
+          const factory = cell.factoryId ? engine.getFactory(cell.factoryId) : undefined;
+          const factoryType = factory ? engine.getFactoryType(factory.typeId) : undefined;
+          const factoryProgress = factory ? engine.getFactoryProductionProgress(factory.id) : 0;
+          const isPlacementTarget = !!pendingFactory && !cell.locked && !cell.materialId && !cell.factoryId;
+
+          return (
+            <GridCell
+              key={`${cell.position.x}-${cell.position.y}`}
+              cell={cell}
+              material={cell.materialId ? engine.getMaterial(cell.materialId) : undefined}
+              factory={factory}
+              factoryType={factoryType}
+              factoryProgress={factoryProgress}
+              onDragStart={handleDragStart}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+              onCellClick={handleCellClick}
+              unlockCost={unlockCost}
+              canAfford={canAfford}
+              isSelected={isSelected(cell)}
+              isPlacementTarget={isPlacementTarget}
+              pendingFactoryType={pendingFactoryType}
+            />
+          );
+        })}
       </div>
     </div>
   );

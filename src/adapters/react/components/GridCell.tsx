@@ -1,22 +1,35 @@
 import { GridCell as GridCellType } from '../../../core/types/Grid';
 import { Material } from '../../../core/types/Material';
+import { Factory } from '../../../core/types/Factory';
+import { FactoryType } from '../../../core/types/Factory';
 
 interface GridCellProps {
   cell: GridCellType;
   material: Material | undefined;
+  factory: Factory | undefined;
+  factoryType: FactoryType | undefined;
+  factoryProgress: number;
   onDragStart: (cell: GridCellType) => void;
   onDragOver: (e: React.DragEvent) => void;
-  onDrop: (cell: GridCellType) => void;
+  onDrop: (cell: GridCellType, e: React.DragEvent) => void;
   onCellClick: (cell: GridCellType) => void;
-  tapCount: number;
   unlockCost: number;
   canAfford: boolean;
   isSelected: boolean;
+  isPlacementTarget: boolean;
+  pendingFactoryType: FactoryType | null;
 }
 
-export function GridCell({ cell, material, onDragStart, onDragOver, onDrop, onCellClick, tapCount, unlockCost, canAfford, isSelected }: GridCellProps) {
+export function GridCell({ cell, material, factory, factoryType, factoryProgress, onDragStart, onDragOver, onDrop, onCellClick, unlockCost, canAfford, isSelected, isPlacementTarget, pendingFactoryType }: GridCellProps) {
   const handleDragStart = (e: React.DragEvent) => {
+    // Allow dragging materials
     if (cell.materialId && !cell.inUse && !cell.locked) {
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('application/json', JSON.stringify(cell));
+      onDragStart(cell);
+    }
+    // Allow dragging factories
+    else if (cell.factoryId && !cell.locked) {
       e.dataTransfer.effectAllowed = 'move';
       e.dataTransfer.setData('application/json', JSON.stringify(cell));
       onDragStart(cell);
@@ -26,7 +39,7 @@ export function GridCell({ cell, material, onDragStart, onDragOver, onDrop, onCe
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     if (!cell.locked) {
-      onDrop(cell);
+      onDrop(cell, e);
     }
   };
 
@@ -58,8 +71,8 @@ export function GridCell({ cell, material, onDragStart, onDragOver, onDrop, onCe
 
   return (
     <div
-      className={`grid-cell ${isSelected ? 'grid-cell-selected' : ''}`}
-      draggable={!!cell.materialId && !cell.inUse}
+      className={`grid-cell ${isSelected ? 'grid-cell-selected' : ''} ${factory ? 'has-factory' : ''} ${isPlacementTarget ? 'placement-target' : ''}`}
+      draggable={(!!cell.materialId && !cell.inUse) || !!cell.factoryId}
       onDragStart={handleDragStart}
       onDragOver={onDragOver}
       onDrop={handleDrop}
@@ -67,17 +80,30 @@ export function GridCell({ cell, material, onDragStart, onDragOver, onDrop, onCe
       onTouchEnd={handleTouchEnd}
       style={{
         opacity: cell.inUse ? 0.5 : 1,
-        cursor: cell.materialId && !cell.inUse ? 'pointer' : (!cell.locked && !cell.materialId ? 'pointer' : 'default'),
+        cursor: isPlacementTarget ? 'pointer' : ((cell.materialId && !cell.inUse) || cell.factoryId ? 'pointer' : (!cell.locked && !cell.materialId ? 'pointer' : 'default')),
       }}
     >
-      {material && (
+      {factory && factoryType && (
+        <div className="factory-on-grid">
+          <div className="factory-grid-icon" title={factoryType.name}>
+            {factoryType.icon}
+          </div>
+          <div className="factory-grid-progress-bar">
+            <div
+              className="factory-grid-progress-fill"
+              style={{ width: `${factoryProgress * 100}%` }}
+            />
+          </div>
+        </div>
+      )}
+      {material && !factory && (
         <div className="material-icon" title={material.name}>
           {material.icon}
         </div>
       )}
-      {!cell.locked && !cell.materialId && !cell.inUse && tapCount > 0 && (
-        <div className="tap-progress">
-          {tapCount}/5
+      {isPlacementTarget && pendingFactoryType && (
+        <div className="placement-preview" title={`Place ${pendingFactoryType.name}`}>
+          {pendingFactoryType.icon}
         </div>
       )}
     </div>

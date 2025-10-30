@@ -33,7 +33,6 @@ export class GameEngine extends EventEmitter {
   private factorySystem: FactorySystem;
 
   private gameTime: number = 0;
-  private lastSpawnTime: number = 0;
   private config: GameConfig;
   private isRunning: boolean = false;
   private cellsUnlocked: number = 0; // track number of cells unlocked
@@ -104,11 +103,11 @@ export class GameEngine extends EventEmitter {
       this.emit('grid:updated', this.gridSystem.getGrid());
     });
 
-    // Auto-spawn raw materials
-    if (this.gameTime - this.lastSpawnTime >= this.config.spawnInterval) {
-      this.spawnRawMaterial();
-      this.lastSpawnTime = this.gameTime;
-    }
+    // Auto-spawn raw materials - DISABLED (factories handle spawning now)
+    // if (this.gameTime - this.lastSpawnTime >= this.config.spawnInterval) {
+    //   this.spawnRawMaterial();
+    //   this.lastSpawnTime = this.gameTime;
+    // }
 
     // Generate new orders if needed
     while (this.orderSystem.getOrders().length < this.config.orderConfig.maxActiveOrders) {
@@ -246,31 +245,17 @@ export class GameEngine extends EventEmitter {
   }
 
   // Factory management
-  unlockFactorySlot(): boolean {
-    if (!this.factorySystem.canUnlockSlot()) return false;
-
-    const cost = this.factorySystem.getNextSlotCost();
-    if (!this.scoringSystem.canAfford(cost)) return false;
-
-    if (!this.scoringSystem.spendPoints(cost)) return false;
-    if (!this.factorySystem.unlockSlot()) return false;
-
-    this.emit('factoryslot:unlocked', { cost });
-    this.emit('score:changed', this.scoringSystem.getScore());
-    return true;
+  getFactoryCost(typeId: string): number {
+    return this.factorySystem.getFactoryCost(typeId);
   }
 
-  getNextFactorySlotCost(): number {
-    return this.factorySystem.getNextSlotCost();
-  }
-
-  purchaseGarden(): Factory | null {
-    const cost = this.config.factoryConfig.gardenPurchaseCost;
+  purchaseFactory(typeId: string): Factory | null {
+    const cost = this.factorySystem.getFactoryCost(typeId);
     if (!this.scoringSystem.canAfford(cost)) return null;
 
     if (!this.scoringSystem.spendPoints(cost)) return null;
 
-    const factory = this.factorySystem.purchaseGarden();
+    const factory = this.factorySystem.purchaseFactory(typeId);
     if (!factory) return null;
 
     this.emit('factory:purchased', { factory, cost });
@@ -278,8 +263,13 @@ export class GameEngine extends EventEmitter {
     return factory;
   }
 
+  // Create a free garden (for starting game)
+  createFreeGarden(): Factory | null {
+    return this.factorySystem.purchaseFactory('garden');
+  }
+
   placeFactory(factoryId: string, position: GridPosition): boolean {
-    const success = this.factorySystem.placeFactory(factoryId, position, this.gridSystem);
+    const success = this.factorySystem.placeFactory(factoryId, position, this.gridSystem, this.gameTime);
     if (success) {
       this.emit('factory:placed', { factoryId, position });
       this.emit('grid:updated', this.gridSystem.getGrid());
@@ -337,8 +327,6 @@ export class GameEngine extends EventEmitter {
       unlockedOrderSlots: this.orderSystem.getUnlockedSlots(),
       maxOrderSlots: this.orderSystem.getMaxSlots(),
       factories: this.factorySystem.getFactories(),
-      unlockedFactorySlots: this.factorySystem.getUnlockedSlots(),
-      maxFactorySlots: this.factorySystem.getMaxSlots(),
     };
   }
 

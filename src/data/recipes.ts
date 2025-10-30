@@ -2,6 +2,15 @@ import { Recipe } from '../core/types/Recipe';
 
 export const recipes: Recipe[] = [
   {
+    id: 'generate-seeds',
+    inputs: [], // No inputs - represents growing seeds from garden
+    output: { materialId: 'seed', quantity: 1 },
+    duration: 0, // Instant for now
+    unlocked: true,
+    cost: 0, // Free/starting recipe
+    factoryTypeId: 'garden', // Garden produces seeds
+  },
+  {
     id: 'seed-to-tree',
     inputs: [
       { materialId: 'seed', quantity: 2 },
@@ -10,6 +19,7 @@ export const recipes: Recipe[] = [
     duration: 0, // Instant for now
     unlocked: true,
     cost: 0, // Free/starting recipe
+    factoryTypeId: 'tree-farm', // Tree Farm produces trees
   },
   {
     id: 'tree-to-lumber',
@@ -19,7 +29,8 @@ export const recipes: Recipe[] = [
     output: { materialId: 'lumber', quantity: 1 },
     duration: 0, // Instant for now
     unlocked: false,
-    cost: 20, // User can adjust
+    cost: 20,
+    factoryTypeId: 'sawmill', // Sawmill produces lumber
   },
   {
     id: 'lumber-to-furniture',
@@ -29,7 +40,8 @@ export const recipes: Recipe[] = [
     output: { materialId: 'furniture', quantity: 1 },
     duration: 0, // Instant for now
     unlocked: false,
-    cost: 40, // User can adjust
+    cost: 40,
+    factoryTypeId: 'workshop', // Workshop produces furniture
   },
   {
     id: 'furniture-to-shack',
@@ -39,7 +51,8 @@ export const recipes: Recipe[] = [
     output: { materialId: 'shack', quantity: 1 },
     duration: 0, // Instant for now
     unlocked: false,
-    cost: 80, // User can adjust
+    cost: 80,
+    factoryTypeId: 'construction-site', // Construction Site produces shacks
   },
   {
     id: 'shack-to-house',
@@ -49,6 +62,7 @@ export const recipes: Recipe[] = [
     output: { materialId: 'house', quantity: 1 },
     duration: 0, // Instant for now
     unlocked: false,
-    cost: 160, // User can adjust
+    cost: 160,
+    factoryTypeId: 'housing-complex', // Housing Complex produces houses
   },
 ];

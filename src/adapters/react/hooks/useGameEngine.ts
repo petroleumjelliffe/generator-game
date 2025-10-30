@@ -15,10 +15,8 @@ const defaultConfig: GameConfig = {
     orderSlotCostMultiplier: 5, // Each unlock costs 5x the previous
   },
   factoryConfig: {
-    maxSlots: 6,
-    slotBaseCost: 100, // Base cost for first factory slot unlock
-    slotCostMultiplier: 1.5, // Each unlock costs 1.5x the previous
-    gardenPurchaseCost: 50, // Cost to purchase a Garden factory
+    factoryBaseCost: 50, // Base cost for first factory of any type
+    factoryCostMultiplier: 1.2, // Each additional factory costs 1.2x the previous
   },
   spawnInterval: 3000, // 3 seconds
   startingScore: 0, // Start with 0 points
@@ -39,16 +37,7 @@ export function useGameEngine(config: GameConfig = defaultConfig) {
     engine.loadRecipes(recipes);
     engine.loadFactoryTypes(factoryTypes);
 
-    // Give player 1 starting Garden factory
-    const startingGarden = engine.purchaseGarden();
-    if (startingGarden) {
-      // Place it on one of the starting cells (center-left)
-      const centerX = Math.floor(config.gridWidth / 2) - 1;
-      const centerY = Math.floor(config.gridHeight / 2);
-      engine.placeFactory(startingGarden.id, { x: centerX, y: centerY });
-    }
-
-    // Subscribe to events
+    // Subscribe to events first
     const updateState = () => setGameState(engine.getState());
 
     engine.on('grid:updated', updateState);
@@ -58,6 +47,16 @@ export function useGameEngine(config: GameConfig = defaultConfig) {
     engine.on('order:fulfilled', updateState);
     engine.on('score:changed', updateState);
     engine.on('material:spawned', updateState);
+    engine.on('factory:spawned', updateState);
+
+    // Give player 1 starting Garden factory (free)
+    const startingGarden = engine.createFreeGarden();
+    if (startingGarden) {
+      // Place it on one of the starting cells (center-left)
+      const centerX = Math.floor(config.gridWidth / 2) - 1;
+      const centerY = Math.floor(config.gridHeight / 2);
+      engine.placeFactory(startingGarden.id, { x: centerX, y: centerY });
+    }
 
     engineRef.current = engine;
     setGameState(engine.getState());
