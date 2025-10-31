@@ -15,7 +15,7 @@ interface GridProps {
   onCancelPlacement: () => void;
 }
 
-export function Grid({ grid, engine, selectedCell, onSelectedCellChange, pendingFactory, pendingFactoryType, onFactoryPlacement, onCancelPlacement }: GridProps) {
+export function Grid({ grid, engine, selectedCell, onSelectedCellChange, pendingFactory, pendingFactoryType, onFactoryPlacement }: GridProps) {
   const [draggedCell, setDraggedCell] = useState<GridCellType | null>(null);
   const [, forceUpdate] = useState({});
   const unlockCost = engine.getNextCellUnlockCost();
@@ -181,8 +181,8 @@ export function Grid({ grid, engine, selectedCell, onSelectedCellChange, pending
               key={`${cell.position.x}-${cell.position.y}`}
               cell={cell}
               material={cell.materialId ? engine.getMaterial(cell.materialId) : undefined}
-              factory={factory}
-              factoryType={factoryType}
+              factory={factory || undefined}
+              factoryType={factoryType || undefined}
               factoryProgress={factoryProgress}
               onDragStart={handleDragStart}
               onDragOver={handleDragOver}

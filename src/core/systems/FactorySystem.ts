@@ -19,7 +19,7 @@ export class FactorySystem {
   private nextFactoryId = 0;
   private factoryPurchaseCounts: Map<string, number> = new Map(); // Track purchases per type
 
-  constructor(config?: FactoryConfig) {
+  constructor(_config?: FactoryConfig) {
     // Config no longer used - costs are per factory type
   }
 
