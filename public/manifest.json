@@ -1,0 +1,26 @@
+{
+  "name": "Generator Game",
+  "short_name": "Generator",
+  "description": "A factory and crafting game where you unlock cells, place factories, and fulfill orders",
+  "start_url": "/generator-game/",
+  "display": "standalone",
+  "background_color": "#1a1a1a",
+  "theme_color": "#ffd700",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/generator-game/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/generator-game/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["games", "entertainment"],
+  "screenshots": []
+}

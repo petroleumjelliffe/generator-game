@@ -31,7 +31,7 @@ export const materials: Material[] = [
     type: 'product',
     tier: 3,
     icon: '🪑',
-    reward: 100,
+    reward: 125,
   },
     {
     id: 'shack',
@@ -39,7 +39,7 @@ export const materials: Material[] = [
     type: 'product',
     tier: 4,
     icon: '🏚️',
-    reward: 250,
+    reward: 300,
   },
     {
     id: 'house',
@@ -47,6 +47,6 @@ export const materials: Material[] = [
     type: 'product',
     tier: 5,
     icon: '🏠',
-    reward: 500,
+    reward: 750,
   },
 ];

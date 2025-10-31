@@ -6,14 +6,22 @@ interface RecipeBookProps {
   recipes: Recipe[];
   engine: GameEngine;
   currentScore: number;
+  onBuyFactory?: (factoryTypeId: string) => void;
 }
 
-export function RecipeBook({ recipes, engine, currentScore }: RecipeBookProps) {
+export function RecipeBook({ recipes, engine, currentScore, onBuyFactory }: RecipeBookProps) {
   const [isOpen, setIsOpen] = useState(true);
 
   const handleUnlock = (recipe: Recipe) => {
     if (!recipe.unlocked && currentScore >= recipe.cost) {
       engine.unlockRecipe(recipe.id);
+    }
+  };
+
+  const handleBuyFactory = (e: React.MouseEvent, factoryTypeId: string) => {
+    e.stopPropagation();
+    if (onBuyFactory) {
+      onBuyFactory(factoryTypeId);
     }
   };
 
@@ -28,7 +36,6 @@ export function RecipeBook({ recipes, engine, currentScore }: RecipeBookProps) {
         <h3>Recipes</h3>
         <span className={`recipe-book-toggle ${isOpen ? 'open' : ''}`}>▼</span>
       </div>
-      <h3>Recipes</h3>
       <div className={`recipe-list ${!isOpen ? 'collapsed' : ''}`}>
         {recipes.map((recipe) => {
           const output = engine.getMaterial(recipe.output.materialId);
@@ -39,6 +46,10 @@ export function RecipeBook({ recipes, engine, currentScore }: RecipeBookProps) {
 
           const canAfford = currentScore >= recipe.cost;
           const locked = !recipe.unlocked;
+
+          const factoryType = recipe.factoryTypeId ? engine.getFactoryType(recipe.factoryTypeId) : null;
+          const factoryCost = recipe.factoryTypeId ? engine.getFactoryCost(recipe.factoryTypeId) : 0;
+          const canAffordFactory = currentScore >= factoryCost;
 
           return (
             <div
@@ -74,6 +85,17 @@ export function RecipeBook({ recipes, engine, currentScore }: RecipeBookProps) {
                   <span className="lock-emoji">🔒</span>
                   <span className="recipe-cost">{recipe.cost}</span>
                 </div>
+              )}
+              {!locked && recipe.factoryTypeId && factoryType && (
+                <button
+                  className={`buy-factory-button ${canAffordFactory ? 'can-afford' : 'cannot-afford'}`}
+                  onClick={(e) => handleBuyFactory(e, recipe.factoryTypeId!)}
+                  disabled={!canAffordFactory}
+                  title={canAffordFactory ? `Buy ${factoryType.name} for ${factoryCost} points` : `Need ${factoryCost} points`}
+                >
+                  <span className="factory-icon">{factoryType.icon}</span>
+                  <span className="factory-cost">{factoryCost}</span>
+                </button>
               )}
             </div>
           );
