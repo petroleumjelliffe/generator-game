@@ -3,6 +3,8 @@ import { useGameEngine } from './adapters/react/hooks/useGameEngine';
 import { Grid } from './adapters/react/components/Grid';
 import { OrderList } from './adapters/react/components/OrderList';
 import { RecipeBook } from './adapters/react/components/RecipeBook';
+import { ConfirmationModal } from './adapters/react/components/ConfirmationModal';
+import { SaveSystem } from './core/systems/SaveSystem';
 import { GridCell } from './core/types/Grid';
 import { Factory, FactoryType } from './core/types/Factory';
 import './App.css';
@@ -12,6 +14,7 @@ function App() {
   const [selectedCell, setSelectedCell] = useState<GridCell | null>(null);
   const [pendingFactory, setPendingFactory] = useState<Factory | null>(null);
   const [pendingFactoryType, setPendingFactoryType] = useState<FactoryType | null>(null);
+  const [showResetModal, setShowResetModal] = useState(false);
 
   if (!engine || !gameState) {
     return <div>Loading...</div>;
@@ -48,10 +51,39 @@ function App() {
     setPendingFactoryType(null);
   };
 
+  const handleStartOver = () => {
+    setShowResetModal(true);
+  };
+
+  const handleConfirmReset = () => {
+    SaveSystem.clear();
+    setShowResetModal(false);
+    // Reload the page to start fresh
+    window.location.reload();
+  };
+
+  const handleCancelReset = () => {
+    setShowResetModal(false);
+  };
+
   return (
     <div className="app">
+      <ConfirmationModal
+        isOpen={showResetModal}
+        title="Start Over?"
+        message="Are you sure you want to start over? This will delete your current progress and cannot be undone."
+        confirmText="Start Over"
+        cancelText="Cancel"
+        onConfirm={handleConfirmReset}
+        onCancel={handleCancelReset}
+      />
       <div className="top-bar">
-        <div className="score">Score: {gameState.score}</div>
+        <div className="score">
+          <span>Score: {gameState.score}</span>
+          <button className="start-over-button" onClick={handleStartOver}>
+            Start Over
+          </button>
+        </div>
         <OrderList
           orders={gameState.orders}
           engine={engine}

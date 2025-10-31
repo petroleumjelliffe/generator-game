@@ -1,9 +1,10 @@
 import { EventEmitter } from '../utils/EventEmitter';
 import { GameState } from './types/GameState';
-import { GridPosition } from './types/Grid';
+import { GridPosition, GridState, GridCell } from './types/Grid';
 import { Material } from './types/Material';
 import { Recipe } from './types/Recipe';
 import { Factory, FactoryType } from './types/Factory';
+import { Order } from './types/Order';
 import { GridSystem } from './systems/GridSystem';
 import { MaterialManager } from './systems/MaterialManager';
 import { RecipeManager } from './systems/RecipeManager';
@@ -181,6 +182,23 @@ export class GameEngine extends EventEmitter {
     return true;
   }
 
+  moveMaterial(fromPosition: GridPosition, toPosition: GridPosition): boolean {
+    // Check if source has a material
+    const materialId = this.gridSystem.getMaterialAt(fromPosition);
+    if (!materialId) return false;
+
+    // Check if target is available (unlocked and empty)
+    if (!this.gridSystem.isCellAvailable(toPosition)) return false;
+
+    // Move the material
+    this.gridSystem.removeMaterialAt(fromPosition);
+    this.gridSystem.setCell(toPosition, materialId, false);
+
+    this.emit('material:moved', { fromPosition, toPosition, materialId });
+    this.emit('grid:updated', this.gridSystem.getGrid());
+    return true;
+  }
+
   unlockCell(position: GridPosition): boolean {
     // Check if cell is locked
     if (!this.gridSystem.isCellLocked(position)) return false;
@@ -315,6 +333,10 @@ export class GameEngine extends EventEmitter {
     return this.factorySystem.getProductionProgress(factoryId, this.gameTime);
   }
 
+  speedUpFactory(factoryId: string, speedUpAmount: number = 1000): boolean {
+    return this.factorySystem.speedUpFactory(factoryId, speedUpAmount);
+  }
+
   // State access
   getState(): Readonly<GameState> {
     return {
@@ -348,5 +370,88 @@ export class GameEngine extends EventEmitter {
 
   getScore() {
     return this.scoringSystem.getScore();
+  }
+
+  // Save/Load support
+  getCellsUnlockedCount(): number {
+    return this.cellsUnlocked;
+  }
+
+  getFactoryPurchaseCounts(): Record<string, number> {
+    return this.factorySystem.getFactoryPurchaseCounts();
+  }
+
+  // Load saved game state
+  loadSaveData(saveData: {
+    score: number;
+    cellsUnlocked: number;
+    factoryPurchaseCounts: Record<string, number>;
+    unlockedRecipes: string[];
+    factories: Factory[];
+    grid: GridState;
+    orders: Order[];
+    unlockedOrderSlots: number;
+  }): void {
+    // Restore score
+    this.scoringSystem.addScore(saveData.score);
+
+    // Restore cells unlocked count
+    this.cellsUnlocked = saveData.cellsUnlocked;
+
+    // Restore factory purchase counts
+    this.factorySystem.setFactoryPurchaseCounts(saveData.factoryPurchaseCounts);
+
+    // Restore unlocked recipes
+    saveData.unlockedRecipes.forEach(recipeId => {
+      this.recipeManager.unlockRecipe(recipeId);
+    });
+
+    // Restore order system (orders and unlocked slots)
+    this.orderSystem.restoreState(saveData.orders, saveData.unlockedOrderSlots);
+
+    // Restore grid (unlocked cells and materials)
+    saveData.grid.cells.forEach((savedCell: GridCell) => {
+      const currentCell = this.gridSystem.getCell(savedCell.position);
+      if (currentCell) {
+        // Unlock cells that were unlocked in the save
+        if (!savedCell.locked && currentCell.locked) {
+          this.gridSystem.unlockCell(savedCell.position);
+        }
+        // Restore materials on the grid
+        if (savedCell.materialId) {
+          this.gridSystem.setCell(savedCell.position, savedCell.materialId, savedCell.inUse);
+        }
+      }
+    });
+
+    // Restore factories
+    saveData.factories.forEach(savedFactory => {
+      // Re-create the factory in the factory system with current game time
+      const factory = this.factorySystem.restoreFactory(savedFactory, this.gameTime);
+      if (factory && savedFactory.position) {
+        // Update grid to show factory at its position
+        const cell = this.gridSystem.getCell(savedFactory.position);
+        if (cell) {
+          cell.factoryId = factory.id;
+        }
+      }
+    });
+
+    this.emit('save:loaded');
+    this.emit('grid:updated', this.gridSystem.getGrid());
+  }
+
+  // Reset game to initial state
+  reset(): void {
+    this.gridSystem = new GridSystem(this.config.gridWidth, this.config.gridHeight);
+    this.craftingSystem = new CraftingSystem(this.gridSystem, this.recipeManager);
+    this.orderSystem = new OrderSystem(this.config.orderConfig);
+    this.scoringSystem = new ScoringSystem();
+    this.factorySystem = new FactorySystem();
+    this.gameTime = 0;
+    this.cellsUnlocked = 0;
+
+    // Reload factory types
+    this.emit('game:reset');
   }
 }

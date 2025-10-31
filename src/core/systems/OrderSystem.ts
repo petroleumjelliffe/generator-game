@@ -102,4 +102,18 @@ export class OrderSystem {
     this.unlockedSlots++;
     return true;
   }
+
+  // Restore order system state from save data
+  restoreState(orders: Order[], unlockedSlots: number): void {
+    this.orders = orders;
+    this.unlockedSlots = unlockedSlots;
+
+    // Update nextOrderId to avoid collisions
+    orders.forEach(order => {
+      const orderIdNum = parseInt(order.id.replace('order-', ''));
+      if (!isNaN(orderIdNum) && orderIdNum >= this.nextOrderId) {
+        this.nextOrderId = orderIdNum + 1;
+      }
+    });
+  }
 }

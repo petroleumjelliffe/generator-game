@@ -73,7 +73,12 @@ export class GridSystem {
   }
 
   getEmptyCells(): GridCell[] {
-    return this.grid.cells.filter(cell => cell.materialId === null && !cell.inUse && !cell.locked);
+    return this.grid.cells.filter(cell =>
+      cell.materialId === null &&
+      !cell.inUse &&
+      !cell.locked &&
+      cell.factoryId === null
+    );
   }
 
   getRandomEmptyCell(): GridCell | null {

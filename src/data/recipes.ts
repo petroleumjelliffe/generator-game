@@ -17,7 +17,7 @@ export const recipes: Recipe[] = [
     ],
     output: { materialId: 'tree', quantity: 1 },
     duration: 0, // Instant for now
-    unlocked: true,
+    unlocked: false,
     cost: 0, // Free/starting recipe
     factoryTypeId: 'tree-farm', // Tree Farm produces trees
   },
@@ -29,7 +29,7 @@ export const recipes: Recipe[] = [
     output: { materialId: 'lumber', quantity: 1 },
     duration: 0, // Instant for now
     unlocked: false,
-    cost: 20,
+    cost: 50,
     factoryTypeId: 'sawmill', // Sawmill produces lumber
   },
   {
@@ -40,7 +40,7 @@ export const recipes: Recipe[] = [
     output: { materialId: 'furniture', quantity: 1 },
     duration: 0, // Instant for now
     unlocked: false,
-    cost: 40,
+    cost: 150,
     factoryTypeId: 'workshop', // Workshop produces furniture
   },
   {
@@ -51,7 +51,7 @@ export const recipes: Recipe[] = [
     output: { materialId: 'shack', quantity: 1 },
     duration: 0, // Instant for now
     unlocked: false,
-    cost: 80,
+    cost: 375,
     factoryTypeId: 'construction-site', // Construction Site produces shacks
   },
   {
@@ -62,7 +62,7 @@ export const recipes: Recipe[] = [
     output: { materialId: 'house', quantity: 1 },
     duration: 0, // Instant for now
     unlocked: false,
-    cost: 160,
+    cost: 900,
     factoryTypeId: 'housing-complex', // Housing Complex produces houses
   },
 ];

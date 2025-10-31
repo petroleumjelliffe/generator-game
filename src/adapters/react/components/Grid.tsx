@@ -79,9 +79,18 @@ export function Grid({ grid, engine, selectedCell, onSelectedCellChange, pending
       return;
     }
 
-    // Try to craft with materials
-    const positions = [draggedCell.position, targetCell.position];
-    engine.startCrafting(positions);
+    // If dragging a material
+    if (draggedCell.materialId) {
+      // If target is empty, move the material
+      if (!targetCell.locked && !targetCell.materialId && !targetCell.factoryId && !targetCell.inUse) {
+        engine.moveMaterial(draggedCell.position, targetCell.position);
+      }
+      // If target has a material, try to craft
+      else if (targetCell.materialId) {
+        const positions = [draggedCell.position, targetCell.position];
+        engine.startCrafting(positions);
+      }
+    }
 
     setDraggedCell(null);
   };
@@ -100,9 +109,24 @@ export function Grid({ grid, engine, selectedCell, onSelectedCellChange, pending
       return;
     }
 
+    // If cell has a factory, speed it up
+    if (cell.factoryId) {
+      engine.speedUpFactory(cell.factoryId, 1000); // Remove 1 second
+      return;
+    }
+
     // If cell is locked, handle unlocking
     if (cell.locked && canAfford) {
       handleUnlock(cell);
+      return;
+    }
+
+    // If a material is selected and clicking an empty cell, move material there
+    if (selectedCell && !cell.locked && !cell.materialId && !cell.factoryId && !cell.inUse) {
+      const moved = engine.moveMaterial(selectedCell.position, cell.position);
+      if (moved) {
+        onSelectedCellChange(null);
+      }
       return;
     }
 

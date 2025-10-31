@@ -286,9 +286,74 @@ export class FactorySystem {
 
     if (factory.nextProduceTime === 0) return 0;
 
+    // Calculate progress based on actual scheduled production time
+    // This accounts for any speedups from tapping
     const elapsed = currentTime - factory.lastProducedTime;
-    const total = type.productionInterval;
+    const total = factory.nextProduceTime - factory.lastProducedTime;
+
+    // Avoid division by zero
+    if (total <= 0) return 1;
 
     return Math.min(1, elapsed / total);
+  }
+
+  // Get factory purchase counts for save system
+  getFactoryPurchaseCounts(): Record<string, number> {
+    const counts: Record<string, number> = {};
+    this.factoryPurchaseCounts.forEach((count, typeId) => {
+      counts[typeId] = count;
+    });
+    return counts;
+  }
+
+  // Restore factory purchase counts from save data
+  setFactoryPurchaseCounts(counts: Record<string, number>): void {
+    this.factoryPurchaseCounts.clear();
+    Object.entries(counts).forEach(([typeId, count]) => {
+      this.factoryPurchaseCounts.set(typeId, count);
+    });
+  }
+
+  // Restore a factory from save data
+  restoreFactory(savedFactory: Factory, currentTime: number): Factory {
+    // Reset production timers to current time (old timestamps are stale)
+    const factoryType = this.factoryTypes.get(savedFactory.typeId);
+    if (factoryType && savedFactory.position) {
+      // Factory is on grid - restart production
+      savedFactory.lastProducedTime = currentTime;
+      savedFactory.nextProduceTime = currentTime + factoryType.productionInterval;
+    } else {
+      // Factory not placed yet - reset timers
+      savedFactory.lastProducedTime = 0;
+      savedFactory.nextProduceTime = 0;
+    }
+
+    // Add factory to the system
+    this.factories.set(savedFactory.id, savedFactory);
+
+    // Update next factory ID to avoid collisions
+    const factoryIdNum = parseInt(savedFactory.id.replace('factory-', ''));
+    if (!isNaN(factoryIdNum) && factoryIdNum >= this.nextFactoryId) {
+      this.nextFactoryId = factoryIdNum + 1;
+    }
+
+    return savedFactory;
+  }
+
+  // Speed up factory production by reducing next produce time
+  speedUpFactory(factoryId: string, speedUpAmount: number): boolean {
+    const factory = this.factories.get(factoryId);
+    if (!factory) return false;
+
+    // Can only speed up if factory is actively producing
+    if (factory.nextProduceTime === 0) return false;
+
+    // Reduce next produce time, but don't let it go below current time
+    factory.nextProduceTime = Math.max(
+      factory.lastProducedTime,
+      factory.nextProduceTime - speedUpAmount
+    );
+
+    return true;
   }
 }
