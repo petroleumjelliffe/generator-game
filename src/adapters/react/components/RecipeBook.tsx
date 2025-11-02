@@ -18,6 +18,14 @@ export function RecipeBook({ recipes, engine, currentScore, onBuyFactory }: Reci
     }
   };
 
+  const handleRecipeClick = (recipe: Recipe) => {
+    // Only handle locked recipes (affordable ones can be unlocked)
+    if (!recipe.unlocked) {
+      handleUnlock(recipe);
+    }
+    // Newly unlocked recipes auto-fade after 3 seconds, no click needed
+  };
+
   const handleBuyFactory = (e: React.MouseEvent, factoryTypeId: string) => {
     e.stopPropagation();
     if (onBuyFactory) {
@@ -57,7 +65,7 @@ export function RecipeBook({ recipes, engine, currentScore, onBuyFactory }: Reci
               className={`recipe-item ${locked ? 'recipe-locked' : 'recipe-unlocked'} ${
                 locked && canAfford ? 'recipe-can-afford' : ''
               } ${locked && !canAfford ? 'recipe-cannot-afford' : ''}`}
-              onClick={() => handleUnlock(recipe)}
+              onClick={() => handleRecipeClick(recipe)}
               style={{
                 cursor: locked && canAfford ? 'pointer' : 'default',
               }}
