@@ -6,6 +6,7 @@ export interface SaveData {
   gameState: GameState;
   factoryPurchaseCounts: Record<string, number>;
   cellsUnlocked: number;
+  newlyUnlockedRecipes?: string[]; // Optional for backwards compatibility
 }
 
 export class SaveSystem {

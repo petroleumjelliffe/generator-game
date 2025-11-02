@@ -46,6 +46,7 @@ export function useGameEngine(config: GameConfig = defaultConfig) {
     engine.on('score:changed', updateState);
     engine.on('material:spawned', updateState);
     engine.on('factory:spawned', updateState);
+    engine.on('recipe:unlocked', updateState);
 
     // Check if there's a saved game
     const savedGame = SaveSystem.load();
@@ -63,6 +64,7 @@ export function useGameEngine(config: GameConfig = defaultConfig) {
           orders: savedGame.gameState.orders || [],
           unlockedOrderSlots: savedGame.gameState.unlockedOrderSlots || 1,
         });
+        // Don't restore newly unlocked state - that's only for live unlock events
       } catch (error) {
         console.error('Failed to load save data, starting fresh:', error);
         // Clear corrupted save
@@ -130,6 +132,7 @@ export function useGameEngine(config: GameConfig = defaultConfig) {
         gameState,
         factoryPurchaseCounts: engineRef.current!.getFactoryPurchaseCounts(),
         cellsUnlocked: engineRef.current!.getCellsUnlockedCount(),
+        // Don't save newlyUnlockedRecipes - it's transient UI state only
       });
     }, 1000); // Save 1 second after last state change
 

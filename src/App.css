@@ -5,8 +5,8 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -244,6 +244,7 @@ body {
 .factory-locked.can-afford {
   border-color: #4a4a4a;
   opacity: 0.7;
+  animation: affordablePulse 2s ease-in-out infinite;
 }
 
 .factory-locked.can-afford:hover {
@@ -266,13 +267,17 @@ body {
 }
 
 .order-locked.can-afford {
-  border-color: #4a4a4a;
-  opacity: 0.7;
+  border: 2px solid #ffd700 !important;
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
+  opacity: 0.9;
+  cursor: pointer;
+  animation: affordablePulse 2s ease-in-out infinite;
 }
 
 .order-locked.can-afford:hover {
-  background-color: #2a2a2a;
+  background-color: rgba(255, 215, 0, 0.1);
   border-color: #ffd700;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
   opacity: 1;
   transform: scale(1.05);
 }
@@ -471,14 +476,22 @@ body {
   position: relative;
 }
 
+/* UPDATED: Affordable locked items pulse continuously */
 .recipe-locked.recipe-can-afford {
-  border-color: #4a4a4a;
+  border: 2px solid #ffd700 !important;
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
+  opacity: 0.9;
+  cursor: pointer;
+  will-change: box-shadow;
+  -webkit-animation: affordablePulse 2s ease-in-out infinite;
+  animation: affordablePulse 2s ease-in-out infinite;
 }
 
 .recipe-locked.recipe-can-afford:hover {
   opacity: 1;
-  background-color: #4a4a4a;
+  background-color: rgba(255, 215, 0, 0.1);
   border-color: #ffd700;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
   transform: scale(1.02);
 }
 
@@ -488,7 +501,32 @@ body {
 
 .recipe-unlocked {
   border: 2px solid #4a4a4a;
+  box-shadow: none;
+  transition: all 0.3s ease-out;
 }
+
+/* Continuous pulse for affordable locked items - only animates glow */
+@-webkit-keyframes affordablePulse {
+  0%,
+  100% {
+    box-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 24px rgba(255, 215, 0, 0.9);
+  }
+}
+
+@keyframes affordablePulse {
+  0%,
+  100% {
+    box-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 24px rgba(255, 215, 0, 0.9);
+  }
+}
+
+/* Removed unlockCelebration animation - now using simple transition on .recipe-unlocked */
 
 .recipe-lock {
   display: flex;
