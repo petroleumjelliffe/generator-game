@@ -7,9 +7,11 @@ interface RecipeBookProps {
   engine: GameEngine;
   currentScore: number;
   onBuyFactory?: (factoryTypeId: string) => void;
+  seenAffordableRecipes: Set<string>;
+  onRecipeSeen: (recipeId: string) => void;
 }
 
-export function RecipeBook({ recipes, engine, currentScore, onBuyFactory }: RecipeBookProps) {
+export function RecipeBook({ recipes, engine, currentScore, onBuyFactory, seenAffordableRecipes, onRecipeSeen }: RecipeBookProps) {
   const [isOpen, setIsOpen] = useState(true);
 
   const handleUnlock = (recipe: Recipe) => {
@@ -19,11 +21,11 @@ export function RecipeBook({ recipes, engine, currentScore, onBuyFactory }: Reci
   };
 
   const handleRecipeClick = (recipe: Recipe) => {
-    // Only handle locked recipes (affordable ones can be unlocked)
-    if (!recipe.unlocked) {
+    // Mark as seen when clicked (if affordable)
+    if (!recipe.unlocked && currentScore >= recipe.cost) {
+      onRecipeSeen(recipe.id);
       handleUnlock(recipe);
     }
-    // Newly unlocked recipes auto-fade after 3 seconds, no click needed
   };
 
   const handleBuyFactory = (e: React.MouseEvent, factoryTypeId: string) => {
@@ -54,6 +56,7 @@ export function RecipeBook({ recipes, engine, currentScore, onBuyFactory }: Reci
 
           const canAfford = currentScore >= recipe.cost;
           const locked = !recipe.unlocked;
+          const isNewlyAffordable = locked && canAfford && !seenAffordableRecipes.has(recipe.id);
 
           const factoryType = recipe.factoryTypeId ? engine.getFactoryType(recipe.factoryTypeId) : null;
           const factoryCost = recipe.factoryTypeId ? engine.getFactoryCost(recipe.factoryTypeId) : 0;
@@ -64,7 +67,9 @@ export function RecipeBook({ recipes, engine, currentScore, onBuyFactory }: Reci
               key={recipe.id}
               className={`recipe-item ${locked ? 'recipe-locked' : 'recipe-unlocked'} ${
                 locked && canAfford ? 'recipe-can-afford' : ''
-              } ${locked && !canAfford ? 'recipe-cannot-afford' : ''}`}
+              } ${locked && !canAfford ? 'recipe-cannot-afford' : ''} ${
+                isNewlyAffordable ? 'recipe-newly-affordable' : ''
+              }`}
               onClick={() => handleRecipeClick(recipe)}
               style={{
                 cursor: locked && canAfford ? 'pointer' : 'default',

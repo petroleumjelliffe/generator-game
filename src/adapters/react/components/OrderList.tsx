@@ -11,15 +11,19 @@ interface OrderListProps {
   currentScore: number;
   onOrderClick?: (orderId: string) => void;
   hasSelection?: boolean;
+  seenAffordableOrderSlots: Set<number>;
+  onSlotSeen: (slotIndex: number) => void;
 }
 
-export function OrderList({ orders, engine, unlockedSlots, maxSlots, slotCost, currentScore, onOrderClick, hasSelection }: OrderListProps) {
-  const handleUnlockSlot = () => {
+export function OrderList({ orders, engine, unlockedSlots, maxSlots, slotCost, currentScore, onOrderClick, hasSelection, seenAffordableOrderSlots, onSlotSeen }: OrderListProps) {
+  const handleUnlockSlot = (slotIndex: number) => {
+    onSlotSeen(slotIndex);
     engine.unlockOrderSlot();
   };
 
-  const handleUnlockSlotTouch = (e: React.TouchEvent) => {
+  const handleUnlockSlotTouch = (e: React.TouchEvent, slotIndex: number) => {
     e.preventDefault(); // Prevent the delayed click event
+    onSlotSeen(slotIndex);
     engine.unlockOrderSlot();
   };
 
@@ -65,12 +69,13 @@ export function OrderList({ orders, engine, unlockedSlots, maxSlots, slotCost, c
         } else {
           // locked slot
           const isNextSlot = index === unlockedSlots;
+          const isNewlyAffordable = isNextSlot && canAfford && !seenAffordableOrderSlots.has(index);
           return (
             <div
               key={`locked-${index}`}
-              className={`order-card order-locked ${isNextSlot && canAfford ? 'can-afford' : ''} ${isNextSlot && !canAfford ? 'cannot-afford' : ''}`}
-              onClick={isNextSlot && canAfford ? handleUnlockSlot : undefined}
-              onTouchEnd={isNextSlot && canAfford ? handleUnlockSlotTouch : undefined}
+              className={`order-card order-locked ${isNextSlot && canAfford ? 'can-afford' : ''} ${isNextSlot && !canAfford ? 'cannot-afford' : ''} ${isNewlyAffordable ? 'order-newly-affordable' : ''}`}
+              onClick={isNextSlot && canAfford ? () => handleUnlockSlot(index) : undefined}
+              onTouchEnd={isNextSlot && canAfford ? (e) => handleUnlockSlotTouch(e, index) : undefined}
               title={isNextSlot ? (canAfford ? `Unlock for ${slotCost} points` : `Locked (need ${slotCost} points)`) : 'Locked'}
               style={{
                 cursor: isNextSlot && canAfford ? 'pointer' : 'not-allowed',

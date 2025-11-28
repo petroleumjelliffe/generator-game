@@ -268,9 +268,15 @@ body {
 
 .order-locked.can-afford {
   border: 2px solid #ffd700 !important;
-  box-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
   opacity: 0.9;
   cursor: pointer;
+}
+
+/* Newly affordable order slots - pulse animation */
+.order-locked.order-newly-affordable {
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
+  will-change: box-shadow;
+  -webkit-animation: affordablePulse 2s ease-in-out infinite;
   animation: affordablePulse 2s ease-in-out infinite;
 }
 
@@ -476,12 +482,16 @@ body {
   position: relative;
 }
 
-/* UPDATED: Affordable locked items pulse continuously */
+/* Affordable locked items - gold border */
 .recipe-locked.recipe-can-afford {
   border: 2px solid #ffd700 !important;
-  box-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
   opacity: 0.9;
   cursor: pointer;
+}
+
+/* Newly affordable items - pulse animation */
+.recipe-locked.recipe-newly-affordable {
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
   will-change: box-shadow;
   -webkit-animation: affordablePulse 2s ease-in-out infinite;
   animation: affordablePulse 2s ease-in-out infinite;

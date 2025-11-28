@@ -25,6 +25,8 @@ const defaultConfig: GameConfig = {
 export function useGameEngine(config: GameConfig = defaultConfig) {
   const engineRef = useRef<GameEngine | null>(null);
   const [gameState, setGameState] = useState<GameState | null>(null);
+  const [seenAffordableRecipes, setSeenAffordableRecipes] = useState<Set<string>>(new Set());
+  const [seenAffordableOrderSlots, setSeenAffordableOrderSlots] = useState<Set<number>>(new Set());
   const animationFrameRef = useRef<number>();
   const lastTickRef = useRef<number>(Date.now());
 
@@ -139,8 +141,20 @@ export function useGameEngine(config: GameConfig = defaultConfig) {
     return () => clearTimeout(saveTimeout);
   }, [gameState]);
 
+  const markRecipeAsSeen = (recipeId: string) => {
+    setSeenAffordableRecipes(prev => new Set(prev).add(recipeId));
+  };
+
+  const markOrderSlotAsSeen = (slotIndex: number) => {
+    setSeenAffordableOrderSlots(prev => new Set(prev).add(slotIndex));
+  };
+
   return {
     engine: engineRef.current,
     gameState,
+    seenAffordableRecipes,
+    seenAffordableOrderSlots,
+    markRecipeAsSeen,
+    markOrderSlotAsSeen,
   };
 }

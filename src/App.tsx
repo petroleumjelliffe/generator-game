@@ -10,7 +10,14 @@ import { Factory, FactoryType } from './core/types/Factory';
 import './App.css';
 
 function App() {
-  const { engine, gameState } = useGameEngine();
+  const {
+    engine,
+    gameState,
+    seenAffordableRecipes,
+    seenAffordableOrderSlots,
+    markRecipeAsSeen,
+    markOrderSlotAsSeen
+  } = useGameEngine();
   const [selectedCell, setSelectedCell] = useState<GridCell | null>(null);
   const [pendingFactory, setPendingFactory] = useState<Factory | null>(null);
   const [pendingFactoryType, setPendingFactoryType] = useState<FactoryType | null>(null);
@@ -93,6 +100,8 @@ function App() {
           currentScore={gameState.score}
           onOrderClick={handleOrderClick}
           hasSelection={!!selectedCell}
+          seenAffordableOrderSlots={seenAffordableOrderSlots}
+          onSlotSeen={markOrderSlotAsSeen}
         />
       </div>
       <div className="main-content">
@@ -121,6 +130,8 @@ function App() {
             engine={engine}
             currentScore={gameState.score}
             onBuyFactory={handleBuyFactory}
+            seenAffordableRecipes={seenAffordableRecipes}
+            onRecipeSeen={markRecipeAsSeen}
           />
         </div>
       </div>
