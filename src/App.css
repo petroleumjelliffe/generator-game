@@ -268,14 +268,14 @@ body {
 
 .order-locked.can-afford {
   border: 2px solid #ffd700 !important;
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
   opacity: 0.9;
   cursor: pointer;
 }
 
 /* Newly affordable order slots - pulse animation */
 .order-locked.order-newly-affordable {
-  box-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
-  will-change: box-shadow;
+  will-change: opacity;
   -webkit-animation: affordablePulse 2s ease-in-out infinite;
   animation: affordablePulse 2s ease-in-out infinite;
 }
@@ -485,14 +485,14 @@ body {
 /* Affordable locked items - gold border */
 .recipe-locked.recipe-can-afford {
   border: 2px solid #ffd700 !important;
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
   opacity: 0.9;
   cursor: pointer;
 }
 
 /* Newly affordable items - pulse animation */
 .recipe-locked.recipe-newly-affordable {
-  box-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
-  will-change: box-shadow;
+  will-change: opacity;
   -webkit-animation: affordablePulse 2s ease-in-out infinite;
   animation: affordablePulse 2s ease-in-out infinite;
 }
@@ -515,24 +515,24 @@ body {
   transition: all 0.3s ease-out;
 }
 
-/* Continuous pulse for affordable locked items - only animates glow */
+/* Pulse animation for newly affordable items - animates opacity for Safari compatibility */
 @-webkit-keyframes affordablePulse {
   0%,
   100% {
-    box-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
+    opacity: 0.9;
   }
   50% {
-    box-shadow: 0 0 24px rgba(255, 215, 0, 0.9);
+    opacity: 1;
   }
 }
 
 @keyframes affordablePulse {
   0%,
   100% {
-    box-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
+    opacity: 0.9;
   }
   50% {
-    box-shadow: 0 0 24px rgba(255, 215, 0, 0.9);
+    opacity: 1;
   }
 }
 
