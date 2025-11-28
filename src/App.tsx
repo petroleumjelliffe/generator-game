@@ -15,6 +15,7 @@ function App() {
   const [pendingFactory, setPendingFactory] = useState<Factory | null>(null);
   const [pendingFactoryType, setPendingFactoryType] = useState<FactoryType | null>(null);
   const [showResetModal, setShowResetModal] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
 
   if (!engine || !gameState) {
     return <div>Loading...</div>;
@@ -66,6 +67,19 @@ function App() {
     setShowResetModal(false);
   };
 
+  const handleMenuToggle = () => {
+    setShowMenu(!showMenu);
+  };
+
+  const handleMenuClose = () => {
+    setShowMenu(false);
+  };
+
+  const handleStartOverFromMenu = () => {
+    setShowMenu(false);
+    handleStartOver();
+  };
+
   return (
     <div className="app">
       <ConfirmationModal
@@ -78,12 +92,6 @@ function App() {
         onCancel={handleCancelReset}
       />
       <div className="top-bar">
-        <div className="score">
-          <span>Score: {gameState.score}</span>
-          <button className="start-over-button" onClick={handleStartOver}>
-            Start Over
-          </button>
-        </div>
         <OrderList
           orders={gameState.orders}
           engine={engine}
@@ -94,6 +102,24 @@ function App() {
           onOrderClick={handleOrderClick}
           hasSelection={!!selectedCell}
         />
+        <div className="score-section">
+          <span className="score">${gameState.score}</span>
+          <div className="menu-container">
+            <button className="menu-button" onClick={handleMenuToggle}>
+              ⋯
+            </button>
+            {showMenu && (
+              <>
+                <div className="menu-backdrop" onClick={handleMenuClose} />
+                <div className="menu-dropdown">
+                  <button className="menu-item start-over-button" onClick={handleStartOverFromMenu}>
+                    Start Over
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       </div>
       <div className="main-content">
         {pendingFactory && pendingFactoryType && (
