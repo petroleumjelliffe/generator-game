@@ -274,8 +274,9 @@ body {
 }
 
 /* Newly affordable order slots - pulse animation */
-.order-locked.order-newly-affordable {
-  will-change: opacity;
+.order-locked.order-newly-affordable,
+.order-locked[data-newly-affordable="true"] {
+  will-change: transform, opacity;
   -webkit-animation: affordablePulse 2s ease-in-out infinite;
   animation: affordablePulse 2s ease-in-out infinite;
 }
@@ -285,6 +286,7 @@ body {
   border-color: #ffd700;
   box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
   opacity: 1;
+  -webkit-transform: scale(1.05);
   transform: scale(1.05);
 }
 
@@ -491,8 +493,9 @@ body {
 }
 
 /* Newly affordable items - pulse animation */
-.recipe-locked.recipe-newly-affordable {
-  will-change: opacity;
+.recipe-locked.recipe-newly-affordable,
+.recipe-locked[data-newly-affordable="true"] {
+  will-change: transform, opacity;
   -webkit-animation: affordablePulse 2s ease-in-out infinite;
   animation: affordablePulse 2s ease-in-out infinite;
 }
@@ -502,6 +505,7 @@ body {
   background-color: rgba(255, 215, 0, 0.1);
   border-color: #ffd700;
   box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+  -webkit-transform: scale(1.02);
   transform: scale(1.02);
 }
 
@@ -515,13 +519,15 @@ body {
   transition: all 0.3s ease-out;
 }
 
-/* Pulse animation for newly affordable items - animates opacity for Safari compatibility */
+/* Pulse animation for newly affordable items - uses transform for Safari compatibility */
 @-webkit-keyframes affordablePulse {
   0%,
   100% {
+    -webkit-transform: scale(1);
     opacity: 0.9;
   }
   50% {
+    -webkit-transform: scale(1.03);
     opacity: 1;
   }
 }
@@ -529,9 +535,11 @@ body {
 @keyframes affordablePulse {
   0%,
   100% {
+    transform: scale(1);
     opacity: 0.9;
   }
   50% {
+    transform: scale(1.03);
     opacity: 1;
   }
 }

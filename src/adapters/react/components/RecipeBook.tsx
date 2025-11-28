@@ -7,7 +7,7 @@ interface RecipeBookProps {
   engine: GameEngine;
   currentScore: number;
   onBuyFactory?: (factoryTypeId: string) => void;
-  seenAffordableRecipes: Set<string>;
+  seenAffordableRecipes: Record<string, boolean>;
   onRecipeSeen: (recipeId: string) => void;
 }
 
@@ -56,7 +56,7 @@ export function RecipeBook({ recipes, engine, currentScore, onBuyFactory, seenAf
 
           const canAfford = currentScore >= recipe.cost;
           const locked = !recipe.unlocked;
-          const isNewlyAffordable = locked && canAfford && !seenAffordableRecipes.has(recipe.id);
+          const isNewlyAffordable = locked && canAfford && !seenAffordableRecipes[recipe.id];
 
           const factoryType = recipe.factoryTypeId ? engine.getFactoryType(recipe.factoryTypeId) : null;
           const factoryCost = recipe.factoryTypeId ? engine.getFactoryCost(recipe.factoryTypeId) : 0;
@@ -70,6 +70,7 @@ export function RecipeBook({ recipes, engine, currentScore, onBuyFactory, seenAf
               } ${locked && !canAfford ? 'recipe-cannot-afford' : ''} ${
                 isNewlyAffordable ? 'recipe-newly-affordable' : ''
               }`}
+              data-newly-affordable={isNewlyAffordable ? 'true' : 'false'}
               onClick={() => handleRecipeClick(recipe)}
               style={{
                 cursor: locked && canAfford ? 'pointer' : 'default',

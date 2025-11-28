@@ -25,8 +25,8 @@ const defaultConfig: GameConfig = {
 export function useGameEngine(config: GameConfig = defaultConfig) {
   const engineRef = useRef<GameEngine | null>(null);
   const [gameState, setGameState] = useState<GameState | null>(null);
-  const [seenAffordableRecipes, setSeenAffordableRecipes] = useState<Set<string>>(new Set());
-  const [seenAffordableOrderSlots, setSeenAffordableOrderSlots] = useState<Set<number>>(new Set());
+  const [seenAffordableRecipes, setSeenAffordableRecipes] = useState<Record<string, boolean>>({});
+  const [seenAffordableOrderSlots, setSeenAffordableOrderSlots] = useState<Record<number, boolean>>({});
   const animationFrameRef = useRef<number>();
   const lastTickRef = useRef<number>(Date.now());
 
@@ -142,11 +142,11 @@ export function useGameEngine(config: GameConfig = defaultConfig) {
   }, [gameState]);
 
   const markRecipeAsSeen = (recipeId: string) => {
-    setSeenAffordableRecipes(prev => new Set(prev).add(recipeId));
+    setSeenAffordableRecipes(prev => ({ ...prev, [recipeId]: true }));
   };
 
   const markOrderSlotAsSeen = (slotIndex: number) => {
-    setSeenAffordableOrderSlots(prev => new Set(prev).add(slotIndex));
+    setSeenAffordableOrderSlots(prev => ({ ...prev, [slotIndex]: true }));
   };
 
   return {

@@ -11,7 +11,7 @@ interface OrderListProps {
   currentScore: number;
   onOrderClick?: (orderId: string) => void;
   hasSelection?: boolean;
-  seenAffordableOrderSlots: Set<number>;
+  seenAffordableOrderSlots: Record<number, boolean>;
   onSlotSeen: (slotIndex: number) => void;
 }
 
@@ -69,11 +69,12 @@ export function OrderList({ orders, engine, unlockedSlots, maxSlots, slotCost, c
         } else {
           // locked slot
           const isNextSlot = index === unlockedSlots;
-          const isNewlyAffordable = isNextSlot && canAfford && !seenAffordableOrderSlots.has(index);
+          const isNewlyAffordable = isNextSlot && canAfford && !seenAffordableOrderSlots[index];
           return (
             <div
               key={`locked-${index}`}
               className={`order-card order-locked ${isNextSlot && canAfford ? 'can-afford' : ''} ${isNextSlot && !canAfford ? 'cannot-afford' : ''} ${isNewlyAffordable ? 'order-newly-affordable' : ''}`}
+              data-newly-affordable={isNewlyAffordable ? 'true' : 'false'}
               onClick={isNextSlot && canAfford ? () => handleUnlockSlot(index) : undefined}
               onTouchEnd={isNextSlot && canAfford ? (e) => handleUnlockSlotTouch(e, index) : undefined}
               title={isNextSlot ? (canAfford ? `Unlock for ${slotCost} points` : `Locked (need ${slotCost} points)`) : 'Locked'}
