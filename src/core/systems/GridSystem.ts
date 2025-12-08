@@ -11,18 +11,12 @@ export class GridSystem {
     const cells: GridCell[] = [];
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
-        // Start with only center 2x2 unlocked (4 cells total)
-        const centerX = Math.floor(width / 2);
-        const centerY = Math.floor(height / 2);
-        const isStartingCell =
-          (x === centerX || x === centerX - 1) &&
-          (y === centerY || y === centerY - 1);
-
+        // All cells are now free (no locking system)
         cells.push({
           position: { x, y },
           materialId: null,
           inUse: false,
-          locked: !isStartingCell,
+          locked: false, // All cells are free
           factoryId: null,
         });
       }
@@ -76,7 +70,6 @@ export class GridSystem {
     return this.grid.cells.filter(cell =>
       cell.materialId === null &&
       !cell.inUse &&
-      !cell.locked &&
       cell.factoryId === null
     );
   }
@@ -91,7 +84,14 @@ export class GridSystem {
 
   isCellAvailable(position: GridPosition): boolean {
     const cell = this.getCell(position);
-    return cell !== null && cell.materialId === null && !cell.inUse && !cell.locked && cell.factoryId === null;
+    // All cells are now free, so we don't check locked
+    return cell !== null && cell.materialId === null && !cell.inUse && cell.factoryId === null;
+  }
+
+  // Check if a cell can receive output from a factory (same as isCellAvailable but explicit)
+  isCellAvailableForOutput(position: GridPosition): boolean {
+    const cell = this.getCell(position);
+    return cell !== null && cell.materialId === null && !cell.inUse && cell.factoryId === null;
   }
 
   isCellOccupied(position: GridPosition): boolean {

@@ -11,7 +11,7 @@ export interface SaveData {
 
 export class SaveSystem {
   private static SAVE_KEY = 'generator-game-save';
-  private static CURRENT_VERSION = '2.0.0'; // Incremented for order system support
+  private static CURRENT_VERSION = '3.0.0'; // Per-factory output cells (replaces grid cell unlocking)
 
   static save(data: SaveData): boolean {
     try {

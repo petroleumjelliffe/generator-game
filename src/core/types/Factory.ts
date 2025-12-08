@@ -19,6 +19,7 @@ export interface Factory {
   position: GridPosition | null; // null if in slot, position if on grid
   lastProducedTime: number;
   nextProduceTime: number;
+  outputOffsets: GridPosition[]; // relative positions where this factory can spawn materials
 }
 
 export interface FactoryState {

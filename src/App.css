@@ -699,6 +699,75 @@ body {
   opacity: 0.9;
 }
 
+/* Factory Selected State */
+.grid-cell.factory-selected {
+  border-color: #ffd700;
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+  animation: factorySelectedPulse 1s ease-in-out infinite;
+}
+
+@keyframes factorySelectedPulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+  50% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.8); }
+}
+
+/* Output Cell Styles */
+.grid-cell.owned-output-cell {
+  background-color: #2a3a4a;
+  border-color: #4a6a8a;
+}
+
+.output-cell-marker {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 0.75rem;
+  color: #6a9aca;
+  opacity: 0.6;
+}
+
+.grid-cell.purchasable-output-cell {
+  background-color: #3a3a2a;
+  border-color: #6a6a3a;
+  border-style: dashed;
+}
+
+.grid-cell.purchasable-output-cell.can-afford {
+  border-color: #8a8a4a;
+  cursor: pointer;
+}
+
+.grid-cell.purchasable-output-cell.can-afford:hover {
+  background-color: #4a4a3a;
+  border-color: #ffd700;
+  border-style: solid;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.grid-cell.purchasable-output-cell.cannot-afford {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.output-cell-cost {
+  position: absolute;
+  bottom: 50%;
+  left: 50%;
+  transform: translate(-50%, 50%);
+  background-color: rgba(0, 0, 0, 0.7);
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.output-cell-cost .cost-value {
+  color: #ffd700;
+  font-size: 0.875rem;
+  font-weight: bold;
+}
+
 /* ============================================
    RESPONSIVE MEDIA QUERIES
    ============================================ */

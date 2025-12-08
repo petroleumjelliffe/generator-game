@@ -13,23 +13,50 @@ interface GridCellProps {
   onDragOver: (e: React.DragEvent) => void;
   onDrop: (cell: GridCellType, e: React.DragEvent) => void;
   onCellClick: (cell: GridCellType) => void;
-  unlockCost: number;
-  canAfford: boolean;
   isSelected: boolean;
   isPlacementTarget: boolean;
   pendingFactoryType: FactoryType | null;
+  onLongPressStart: (cell: GridCellType) => void;
+  onLongPressEnd: () => void;
+  onLongPressCancel: () => void;
+  isPurchasableOutputCell: boolean;
+  isOwnedOutputCell: boolean;
+  isFactorySelected: boolean;
+  outputCellCost: number;
+  canAffordOutputCell: boolean;
 }
 
-export function GridCell({ cell, material, factory, factoryType, factoryProgress, onDragStart, onDragOver, onDrop, onCellClick, unlockCost, canAfford, isSelected, isPlacementTarget, pendingFactoryType }: GridCellProps) {
+export function GridCell({
+  cell,
+  material,
+  factory,
+  factoryType,
+  factoryProgress,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onCellClick,
+  isSelected,
+  isPlacementTarget,
+  pendingFactoryType,
+  onLongPressStart,
+  onLongPressEnd,
+  onLongPressCancel,
+  isPurchasableOutputCell,
+  isOwnedOutputCell,
+  isFactorySelected,
+  outputCellCost,
+  canAffordOutputCell,
+}: GridCellProps) {
   const handleDragStart = (e: React.DragEvent) => {
     // Allow dragging materials
-    if (cell.materialId && !cell.inUse && !cell.locked) {
+    if (cell.materialId && !cell.inUse) {
       e.dataTransfer.effectAllowed = 'move';
       e.dataTransfer.setData('application/json', JSON.stringify(cell));
       onDragStart(cell);
     }
     // Allow dragging factories
-    else if (cell.factoryId && !cell.locked) {
+    else if (cell.factoryId) {
       e.dataTransfer.effectAllowed = 'move';
       e.dataTransfer.setData('application/json', JSON.stringify(cell));
       onDragStart(cell);
@@ -38,50 +65,71 @@ export function GridCell({ cell, material, factory, factoryType, factoryProgress
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    if (!cell.locked) {
-      onDrop(cell, e);
-    }
+    onDrop(cell, e);
   };
 
   const handleClick = () => {
     onCellClick(cell);
   };
 
+  // Touch event handlers for long press
+  const handleTouchStart = () => {
+    onLongPressStart(cell);
+  };
+
   const handleTouchEnd = (e: React.TouchEvent) => {
     e.preventDefault(); // Prevent the delayed click event
+    onLongPressEnd();
     onCellClick(cell);
   };
 
-  if (cell.locked) {
-    return (
-      <div
-        className={`grid-cell grid-cell-locked ${canAfford ? 'can-afford' : 'cannot-afford'}`}
-        onClick={handleClick}
-        onTouchEnd={handleTouchEnd}
-        title={canAfford ? `Unlock for ${unlockCost} points` : `Locked (need ${unlockCost} points)`}
-        style={{
-          cursor: canAfford ? 'pointer' : 'not-allowed',
-        }}
-      >
-        <div className="lock-icon">🔒</div>
-        <div className="unlock-cost">{unlockCost}</div>
-      </div>
-    );
-  }
+  const handleTouchCancel = () => {
+    onLongPressCancel();
+  };
+
+  // Mouse event handlers for long press (desktop)
+  const handleMouseDown = () => {
+    onLongPressStart(cell);
+  };
+
+  const handleMouseUp = () => {
+    onLongPressEnd();
+  };
+
+  const handleMouseLeave = () => {
+    onLongPressCancel();
+  };
+
+  // Build class names
+  const classNames = ['grid-cell'];
+  if (isSelected) classNames.push('grid-cell-selected');
+  if (factory) classNames.push('has-factory');
+  if (isFactorySelected) classNames.push('factory-selected');
+  if (isPlacementTarget) classNames.push('placement-target');
+  if (isPurchasableOutputCell) classNames.push('purchasable-output-cell');
+  if (isOwnedOutputCell) classNames.push('owned-output-cell');
+  if (isPurchasableOutputCell && canAffordOutputCell) classNames.push('can-afford');
+  if (isPurchasableOutputCell && !canAffordOutputCell) classNames.push('cannot-afford');
 
   return (
     <div
-      className={`grid-cell ${isSelected ? 'grid-cell-selected' : ''} ${factory ? 'has-factory' : ''} ${isPlacementTarget ? 'placement-target' : ''}`}
+      className={classNames.join(' ')}
       draggable={(!!cell.materialId && !cell.inUse) || !!cell.factoryId}
       onDragStart={handleDragStart}
       onDragOver={onDragOver}
       onDrop={handleDrop}
       onClick={handleClick}
+      onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchCancel}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseLeave}
       style={{
         opacity: cell.inUse ? 0.5 : 1,
-        cursor: isPlacementTarget ? 'pointer' : ((cell.materialId && !cell.inUse) || cell.factoryId ? 'pointer' : (!cell.locked && !cell.materialId ? 'pointer' : 'default')),
+        cursor: isPlacementTarget || isPurchasableOutputCell ? 'pointer' : ((cell.materialId && !cell.inUse) || cell.factoryId ? 'pointer' : 'default'),
       }}
+      title={isPurchasableOutputCell ? (canAffordOutputCell ? `Buy output cell for ${outputCellCost}` : `Need ${outputCellCost} points`) : undefined}
     >
       {factory && factoryType && (
         <div className="factory-on-grid">
@@ -105,6 +153,14 @@ export function GridCell({ cell, material, factory, factoryType, factoryProgress
         <div className="placement-preview" title={`Place ${pendingFactoryType.name}`}>
           {pendingFactoryType.icon}
         </div>
+      )}
+      {isPurchasableOutputCell && (
+        <div className="output-cell-cost">
+          <span className="cost-value">{outputCellCost}</span>
+        </div>
+      )}
+      {isOwnedOutputCell && !material && (
+        <div className="output-cell-marker">⬡</div>
       )}
     </div>
   );
