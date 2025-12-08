@@ -1,0 +1,4 @@
+title: Generator Game Documentation
+description: Architectural Decision Records and technical documentation
+theme: jekyll-theme-cayman
+markdown: kramdown
