@@ -13,15 +13,18 @@ import { OrderSystem, OrderConfig } from './systems/OrderSystem';
 import { ScoringSystem } from './systems/ScoringSystem';
 import { FactorySystem, FactoryConfig } from './systems/FactorySystem';
 
+export type { FactoryConfig };
+
 export interface GameConfig {
   gridWidth: number;
   gridHeight: number;
   orderConfig: OrderConfig;
-  factoryConfig?: FactoryConfig; // Optional - costs are now per factory type
+  factoryConfig?: FactoryConfig; // Optional - output cell costs
   spawnInterval: number; // milliseconds between spawns
   startingScore?: number; // optional starting score
-  cellUnlockBaseCost: number; // base cost for first cell unlock
-  cellUnlockCostMultiplier: number; // multiplier applied to previous cost
+  // Deprecated - cell unlocking removed in favor of per-factory output cells
+  cellUnlockBaseCost?: number;
+  cellUnlockCostMultiplier?: number;
 }
 
 export class GameEngine extends EventEmitter {
@@ -49,7 +52,7 @@ export class GameEngine extends EventEmitter {
     this.craftingSystem = new CraftingSystem(this.gridSystem, this.recipeManager);
     this.orderSystem = new OrderSystem(config.orderConfig);
     this.scoringSystem = new ScoringSystem();
-    this.factorySystem = new FactorySystem(); // No config needed - costs are per factory type
+    this.factorySystem = new FactorySystem(config.factoryConfig); // Pass output cell cost config
 
     // Set starting score if provided
     if (config.startingScore && config.startingScore > 0) {
@@ -199,32 +202,23 @@ export class GameEngine extends EventEmitter {
     return true;
   }
 
-  unlockCell(position: GridPosition): boolean {
-    // Check if cell is locked
-    if (!this.gridSystem.isCellLocked(position)) return false;
-
-    // Calculate cost based on number of unlocks
-    const cost = this.getNextCellUnlockCost();
-
-    // Check if player can afford
-    if (!this.scoringSystem.canAfford(cost)) return false;
-
-    // Spend points and unlock
-    if (!this.scoringSystem.spendPoints(cost)) return false;
-    if (!this.gridSystem.unlockCell(position)) return false;
-
-    this.cellsUnlocked++;
-
-    this.emit('cell:unlocked', { position, cost });
-    this.emit('score:changed', this.scoringSystem.getScore());
-    this.emit('grid:updated', this.gridSystem.getGrid());
-    return true;
+  /**
+   * @deprecated Cell unlocking has been replaced by per-factory output cells.
+   * All grid cells are now free. Use purchaseOutputCell() instead.
+   */
+  unlockCell(_position: GridPosition): boolean {
+    // Cell unlocking removed - all cells are free now
+    // Output cells are purchased per-factory instead
+    return false;
   }
 
+  /**
+   * @deprecated Cell unlocking has been replaced by per-factory output cells.
+   * Use getOutputCellCost(factoryId) instead.
+   */
   getNextCellUnlockCost(): number {
-    // First unlock costs baseCost
-    // Each subsequent unlock multiplies by the multiplier
-    return Math.round(this.config.cellUnlockBaseCost * Math.pow(this.config.cellUnlockCostMultiplier, this.cellsUnlocked));
+    // Deprecated - return 0 as all cells are free now
+    return 0;
   }
 
   unlockRecipe(recipeId: string): boolean {
@@ -281,9 +275,14 @@ export class GameEngine extends EventEmitter {
     return factory;
   }
 
-  // Create a free garden (for starting game)
+  // Create a free garden (for starting game) with one free output cell
   createFreeGarden(): Factory | null {
-    return this.factorySystem.purchaseFactory('garden');
+    const garden = this.factorySystem.purchaseFactory('garden');
+    if (garden) {
+      // Give starting garden one free output cell (bottom-center)
+      this.factorySystem.addOutputOffset(garden.id, { x: 0, y: 1 });
+    }
+    return garden;
   }
 
   placeFactory(factoryId: string, position: GridPosition): boolean {
@@ -335,6 +334,40 @@ export class GameEngine extends EventEmitter {
 
   speedUpFactory(factoryId: string, speedUpAmount: number = 1000): boolean {
     return this.factorySystem.speedUpFactory(factoryId, speedUpAmount);
+  }
+
+  // Output cell management
+  getOutputCellCost(factoryId: string): number {
+    return this.factorySystem.getOutputCellCost(factoryId);
+  }
+
+  purchaseOutputCell(factoryId: string, offset: GridPosition): boolean {
+    const factory = this.factorySystem.getFactory(factoryId);
+    if (!factory) return false;
+
+    // Check if offset is valid
+    if (!this.factorySystem.isValidOutputOffset(offset)) return false;
+    if (this.factorySystem.hasOutputOffset(factoryId, offset)) return false;
+
+    // Check if player can afford
+    const cost = this.factorySystem.getOutputCellCost(factoryId);
+    if (!this.scoringSystem.canAfford(cost)) return false;
+
+    // Spend points and add output cell
+    if (!this.scoringSystem.spendPoints(cost)) return false;
+    if (!this.factorySystem.addOutputOffset(factoryId, offset)) return false;
+
+    this.emit('outputcell:purchased', { factoryId, offset, cost });
+    this.emit('score:changed', this.scoringSystem.getScore());
+    return true;
+  }
+
+  getFactoryOutputPositions(factoryId: string): GridPosition[] {
+    return this.factorySystem.getOutputPositions(factoryId);
+  }
+
+  getPurchasableOutputOffsets(factoryId: string): GridPosition[] {
+    return this.factorySystem.getPurchasableOutputOffsets(factoryId);
   }
 
   // State access

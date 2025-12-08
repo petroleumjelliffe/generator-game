@@ -2,9 +2,10 @@ import { Factory, FactoryType } from '../types/Factory';
 import { GridPosition } from '../types/Grid';
 import { GridSystem } from './GridSystem';
 
-// Config is no longer needed - costs are per factory type
+// Config for output cell costs
 export interface FactoryConfig {
-  // Kept for backward compatibility but unused
+  outputCellBaseCost: number;
+  outputCellCostMultiplier: number;
 }
 
 interface SpawnResult {
@@ -18,9 +19,13 @@ export class FactorySystem {
   private factoryTypes: Map<string, FactoryType> = new Map();
   private nextFactoryId = 0;
   private factoryPurchaseCounts: Map<string, number> = new Map(); // Track purchases per type
+  private config: FactoryConfig;
 
-  constructor(_config?: FactoryConfig) {
-    // Config no longer used - costs are per factory type
+  constructor(config?: FactoryConfig) {
+    this.config = config || {
+      outputCellBaseCost: 20,
+      outputCellCostMultiplier: 1.5,
+    };
   }
 
   // Load factory type definitions
@@ -52,6 +57,7 @@ export class FactorySystem {
       position: null, // Not placed yet
       lastProducedTime: 0,
       nextProduceTime: 0,
+      outputOffsets: [], // Start with no outputs, player must purchase them
     };
 
     this.factories.set(factory.id, factory);
@@ -61,6 +67,69 @@ export class FactorySystem {
     this.factoryPurchaseCounts.set(typeId, currentCount + 1);
 
     return factory;
+  }
+
+  // Output cell management
+  getOutputCellCost(factoryId: string): number {
+    const factory = this.factories.get(factoryId);
+    if (!factory) return 0;
+
+    const outputCount = factory.outputOffsets.length;
+    return Math.round(this.config.outputCellBaseCost * Math.pow(this.config.outputCellCostMultiplier, outputCount));
+  }
+
+  // Check if an offset is valid (within 3x3 radius, not the factory position itself)
+  isValidOutputOffset(offset: GridPosition): boolean {
+    // Must be within 3x3 radius (1 cell in each direction)
+    if (Math.abs(offset.x) > 1 || Math.abs(offset.y) > 1) return false;
+    // Cannot be the factory position itself (0,0)
+    if (offset.x === 0 && offset.y === 0) return false;
+    return true;
+  }
+
+  // Check if factory already has this output offset
+  hasOutputOffset(factoryId: string, offset: GridPosition): boolean {
+    const factory = this.factories.get(factoryId);
+    if (!factory) return false;
+
+    return factory.outputOffsets.some(o => o.x === offset.x && o.y === offset.y);
+  }
+
+  // Add output offset to factory
+  addOutputOffset(factoryId: string, offset: GridPosition): boolean {
+    const factory = this.factories.get(factoryId);
+    if (!factory) return false;
+
+    if (!this.isValidOutputOffset(offset)) return false;
+    if (this.hasOutputOffset(factoryId, offset)) return false;
+
+    factory.outputOffsets.push({ x: offset.x, y: offset.y });
+    return true;
+  }
+
+  // Get all purchasable output offsets for a factory (within 3x3, not already owned)
+  getPurchasableOutputOffsets(factoryId: string): GridPosition[] {
+    const factory = this.factories.get(factoryId);
+    if (!factory) return [];
+
+    const allOffsets: GridPosition[] = [
+      { x: -1, y: -1 }, { x: 0, y: -1 }, { x: 1, y: -1 },
+      { x: -1, y: 0 },                   { x: 1, y: 0 },
+      { x: -1, y: 1 },  { x: 0, y: 1 },  { x: 1, y: 1 },
+    ];
+
+    return allOffsets.filter(offset => !this.hasOutputOffset(factoryId, offset));
+  }
+
+  // Get absolute positions of factory's output cells
+  getOutputPositions(factoryId: string): GridPosition[] {
+    const factory = this.factories.get(factoryId);
+    if (!factory || !factory.position) return [];
+
+    return factory.outputOffsets.map(offset => ({
+      x: factory.position!.x + offset.x,
+      y: factory.position!.y + offset.y,
+    }));
   }
 
   // Legacy method for initial garden
@@ -154,13 +223,21 @@ export class FactorySystem {
     this.factories.delete(factory1Id);
     this.factories.delete(factory2Id);
 
-    // Create evolved factory
+    // Create evolved factory - inherits output offsets from both factories
+    const combinedOffsets = [...factory1.outputOffsets];
+    for (const offset of factory2.outputOffsets) {
+      if (!combinedOffsets.some(o => o.x === offset.x && o.y === offset.y)) {
+        combinedOffsets.push(offset);
+      }
+    }
+
     const evolvedFactory: Factory = {
       id: `factory-${this.nextFactoryId++}`,
       typeId: evolvedType.id,
       position: targetPosition,
       lastProducedTime: 0,
       nextProduceTime: 0,
+      outputOffsets: combinedOffsets,
     };
 
     this.factories.set(evolvedFactory.id, evolvedFactory);
@@ -181,6 +258,9 @@ export class FactorySystem {
       // Skip factories not on grid
       if (!factory.position) continue;
 
+      // Skip factories with no output cells
+      if (factory.outputOffsets.length === 0) continue;
+
       const type = this.factoryTypes.get(factory.typeId);
       if (!type) continue;
 
@@ -191,8 +271,8 @@ export class FactorySystem {
 
       // Check if it's time to produce
       if (currentTime >= factory.nextProduceTime) {
-        // Try to spawn on adjacent cell
-        const spawnPosition = this.findAdjacentSpawnPosition(factory.position, gridSystem);
+        // Try to spawn on an output cell
+        const spawnPosition = this.findOutputSpawnPosition(factory, gridSystem);
 
         if (spawnPosition) {
           // Spawn material
@@ -206,38 +286,34 @@ export class FactorySystem {
           factory.lastProducedTime = currentTime;
           factory.nextProduceTime = currentTime + type.productionInterval;
         }
-        // If no spawn position available, wait and try again next tick
-        // (nextProduceTime stays the same, so it will retry immediately)
+        // If no spawn position available (all output cells occupied), factory backs up
+        // (nextProduceTime stays the same, so it will retry immediately when a cell is free)
       }
     }
 
     return results;
   }
 
-  private findAdjacentSpawnPosition(position: GridPosition, gridSystem: GridSystem): GridPosition | null {
-    const adjacentOffsets = [
-      { x: 0, y: -1 }, // up
-      { x: 1, y: 0 },  // right
-      { x: 0, y: 1 },  // down
-      { x: -1, y: 0 }, // left
-    ];
+  // Find an available output cell to spawn material
+  private findOutputSpawnPosition(factory: Factory, gridSystem: GridSystem): GridPosition | null {
+    if (!factory.position) return null;
 
-    // Shuffle offsets for randomness
-    const shuffled = adjacentOffsets.sort(() => Math.random() - 0.5);
+    // Shuffle output offsets for randomness
+    const shuffled = [...factory.outputOffsets].sort(() => Math.random() - 0.5);
 
     for (const offset of shuffled) {
       const checkPos: GridPosition = {
-        x: position.x + offset.x,
-        y: position.y + offset.y,
+        x: factory.position.x + offset.x,
+        y: factory.position.y + offset.y,
       };
 
-      // Check if position is valid and empty
-      if (gridSystem.isCellAvailable(checkPos)) {
+      // Check if position is valid and empty (not locked check needed - all cells are free now)
+      if (gridSystem.isCellAvailableForOutput(checkPos)) {
         return checkPos;
       }
     }
 
-    return null; // No available adjacent cells
+    return null; // All output cells are occupied - factory backs up
   }
 
   // Queries
@@ -316,6 +392,11 @@ export class FactorySystem {
 
   // Restore a factory from save data
   restoreFactory(savedFactory: Factory, currentTime: number): Factory {
+    // Ensure outputOffsets exists (for backwards compatibility with old saves)
+    if (!savedFactory.outputOffsets) {
+      savedFactory.outputOffsets = [];
+    }
+
     // Reset production timers to current time (old timestamps are stale)
     const factoryType = this.factoryTypes.get(savedFactory.typeId);
     if (factoryType && savedFactory.position) {

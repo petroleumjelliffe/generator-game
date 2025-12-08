@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { GridState, GridCell as GridCellType } from '../../../core/types/Grid';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { GridState, GridCell as GridCellType, GridPosition } from '../../../core/types/Grid';
 import { GameEngine } from '../../../core/GameEngine';
 import { Factory, FactoryType } from '../../../core/types/Factory';
 import { GridCell } from './GridCell';
@@ -15,12 +15,15 @@ interface GridProps {
   onCancelPlacement: () => void;
 }
 
+const LONG_PRESS_DURATION = 500; // milliseconds
+
 export function Grid({ grid, engine, selectedCell, onSelectedCellChange, pendingFactory, pendingFactoryType, onFactoryPlacement }: GridProps) {
   const [draggedCell, setDraggedCell] = useState<GridCellType | null>(null);
   const [, forceUpdate] = useState({});
-  const unlockCost = engine.getNextCellUnlockCost();
+  const [selectedFactory, setSelectedFactory] = useState<Factory | null>(null);
+  const longPressTimerRef = useRef<number | null>(null);
+  const longPressTriggeredRef = useRef(false);
   const currentScore = engine.getScore();
-  const canAfford = currentScore >= unlockCost;
 
   // Force re-render every 100ms to animate factory progress bars
   useEffect(() => {
@@ -30,6 +33,64 @@ export function Grid({ grid, engine, selectedCell, onSelectedCellChange, pending
 
     return () => clearInterval(interval);
   }, []);
+
+  // Get output cell info for selected factory
+  const outputCellCost = selectedFactory ? engine.getOutputCellCost(selectedFactory.id) : 0;
+  const canAffordOutputCell = currentScore >= outputCellCost;
+  const purchasableOffsets = selectedFactory ? engine.getPurchasableOutputOffsets(selectedFactory.id) : [];
+
+  // Check if a position is a purchasable output cell for the selected factory
+  const isPurchasableOutputCell = useCallback((cell: GridCellType): GridPosition | null => {
+    if (!selectedFactory || !selectedFactory.position) return null;
+
+    const offsetX = cell.position.x - selectedFactory.position.x;
+    const offsetY = cell.position.y - selectedFactory.position.y;
+
+    const isPurchasable = purchasableOffsets.some(
+      offset => offset.x === offsetX && offset.y === offsetY
+    );
+
+    return isPurchasable ? { x: offsetX, y: offsetY } : null;
+  }, [selectedFactory, purchasableOffsets]);
+
+  // Check if a position is an owned output cell for ANY placed factory
+  const isOwnedOutputCell = useCallback((cell: GridCellType): boolean => {
+    const factories = engine.getFactories();
+    for (const factory of factories) {
+      if (!factory.position) continue;
+      const outputPositions = engine.getFactoryOutputPositions(factory.id);
+      if (outputPositions.some(pos => pos.x === cell.position.x && pos.y === cell.position.y)) {
+        return true;
+      }
+    }
+    return false;
+  }, [engine]);
+
+  // Long press handlers for factory selection
+  const handleLongPressStart = useCallback((cell: GridCellType) => {
+    if (!cell.factoryId) return;
+
+    longPressTriggeredRef.current = false;
+    longPressTimerRef.current = window.setTimeout(() => {
+      longPressTriggeredRef.current = true;
+      const factory = engine.getFactory(cell.factoryId!);
+      if (factory) {
+        setSelectedFactory(factory);
+      }
+    }, LONG_PRESS_DURATION);
+  }, [engine]);
+
+  const handleLongPressEnd = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }, []);
+
+  const handleLongPressCancel = useCallback(() => {
+    handleLongPressEnd();
+    longPressTriggeredRef.current = false;
+  }, [handleLongPressEnd]);
 
   const handleDragStart = (cell: GridCellType) => {
     setDraggedCell(cell);
@@ -95,34 +156,48 @@ export function Grid({ grid, engine, selectedCell, onSelectedCellChange, pending
     setDraggedCell(null);
   };
 
-  const handleUnlock = (cell: GridCellType) => {
-    engine.unlockCell(cell.position);
-  };
-
   const handleCellClick = (cell: GridCellType) => {
+    // If long press was triggered, don't handle regular click
+    if (longPressTriggeredRef.current) {
+      longPressTriggeredRef.current = false;
+      return;
+    }
+
     // If in placement mode, try to place factory
     if (pendingFactory) {
-      // Can only place on unlocked, empty cells
-      if (!cell.locked && !cell.materialId && !cell.factoryId) {
+      // Can only place on empty cells
+      if (!cell.materialId && !cell.factoryId) {
         onFactoryPlacement(cell);
       }
       return;
     }
 
-    // If cell has a factory, speed it up
+    // If a factory is selected, check for output cell purchasing
+    if (selectedFactory) {
+      const purchasableOffset = isPurchasableOutputCell(cell);
+      if (purchasableOffset && canAffordOutputCell) {
+        engine.purchaseOutputCell(selectedFactory.id, purchasableOffset);
+        // Refresh factory state after purchase
+        const updatedFactory = engine.getFactory(selectedFactory.id);
+        setSelectedFactory(updatedFactory);
+        return;
+      }
+
+      // Clicking elsewhere deselects the factory
+      if (!cell.factoryId || cell.factoryId !== selectedFactory.id) {
+        setSelectedFactory(null);
+        // Don't return - continue to handle other click logic
+      }
+    }
+
+    // If cell has a factory, speed it up (short tap)
     if (cell.factoryId) {
       engine.speedUpFactory(cell.factoryId, 1000); // Remove 1 second
       return;
     }
 
-    // If cell is locked, handle unlocking
-    if (cell.locked && canAfford) {
-      handleUnlock(cell);
-      return;
-    }
-
     // If a material is selected and clicking an empty cell, move material there
-    if (selectedCell && !cell.locked && !cell.materialId && !cell.factoryId && !cell.inUse) {
+    if (selectedCell && !cell.materialId && !cell.factoryId && !cell.inUse) {
       const moved = engine.moveMaterial(selectedCell.position, cell.position);
       if (moved) {
         onSelectedCellChange(null);
@@ -174,7 +249,9 @@ export function Grid({ grid, engine, selectedCell, onSelectedCellChange, pending
           const factory = cell.factoryId ? engine.getFactory(cell.factoryId) : undefined;
           const factoryType = factory ? engine.getFactoryType(factory.typeId) : undefined;
           const factoryProgress = factory ? engine.getFactoryProductionProgress(factory.id) : 0;
-          const isPlacementTarget = !!pendingFactory && !cell.locked && !cell.materialId && !cell.factoryId;
+          const isPlacementTarget = !!pendingFactory && !cell.materialId && !cell.factoryId;
+          const purchasableOffset = isPurchasableOutputCell(cell);
+          const isFactorySelected = selectedFactory?.id === cell.factoryId;
 
           return (
             <GridCell
@@ -188,11 +265,17 @@ export function Grid({ grid, engine, selectedCell, onSelectedCellChange, pending
               onDragOver={handleDragOver}
               onDrop={handleDrop}
               onCellClick={handleCellClick}
-              unlockCost={unlockCost}
-              canAfford={canAfford}
               isSelected={isSelected(cell)}
               isPlacementTarget={isPlacementTarget}
               pendingFactoryType={pendingFactoryType}
+              onLongPressStart={handleLongPressStart}
+              onLongPressEnd={handleLongPressEnd}
+              onLongPressCancel={handleLongPressCancel}
+              isPurchasableOutputCell={!!purchasableOffset}
+              isOwnedOutputCell={isOwnedOutputCell(cell)}
+              isFactorySelected={isFactorySelected}
+              outputCellCost={outputCellCost}
+              canAffordOutputCell={canAffordOutputCell}
             />
           );
         })}
