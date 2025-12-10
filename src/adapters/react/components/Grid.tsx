@@ -53,9 +53,11 @@ export function Grid({ grid, engine, selectedCell, onSelectedCellChange, pending
     return isPurchasable ? { x: offsetX, y: offsetY } : null;
   }, [selectedFactory, purchasableOffsets]);
 
+  // Get all placed factories
+  const factories = engine.getFactories();
+
   // Check if a position is an owned output cell for ANY placed factory
-  const isOwnedOutputCell = useCallback((cell: GridCellType): boolean => {
-    const factories = engine.getFactories();
+  const isOwnedOutputCell = (cell: GridCellType): boolean => {
     for (const factory of factories) {
       if (!factory.position) continue;
       const outputPositions = engine.getFactoryOutputPositions(factory.id);
@@ -64,7 +66,29 @@ export function Grid({ grid, engine, selectedCell, onSelectedCellChange, pending
       }
     }
     return false;
-  }, [engine]);
+  };
+
+  // Check if a position is a potential (unpurchased) output cell for ANY placed factory
+  // These are cells within the 3x3 area around a factory that haven't been purchased yet
+  const isPotentialOutputCell = (cell: GridCellType): boolean => {
+    for (const factory of factories) {
+      if (!factory.position) continue;
+
+      // Check if cell is within 3x3 area (offset -1 to 1 in both directions)
+      const offsetX = cell.position.x - factory.position.x;
+      const offsetY = cell.position.y - factory.position.y;
+
+      // Must be adjacent (within 1 cell) but not the factory cell itself
+      if (Math.abs(offsetX) <= 1 && Math.abs(offsetY) <= 1 && !(offsetX === 0 && offsetY === 0)) {
+        // Check if this offset is NOT already owned
+        const isOwned = factory.outputOffsets.some(o => o.x === offsetX && o.y === offsetY);
+        if (!isOwned) {
+          return true;
+        }
+      }
+    }
+    return false;
+  };
 
   // Long press handlers for factory selection
   const handleLongPressStart = useCallback((cell: GridCellType) => {
@@ -273,6 +297,7 @@ export function Grid({ grid, engine, selectedCell, onSelectedCellChange, pending
               onLongPressCancel={handleLongPressCancel}
               isPurchasableOutputCell={!!purchasableOffset}
               isOwnedOutputCell={isOwnedOutputCell(cell)}
+              isPotentialOutputCell={isPotentialOutputCell(cell)}
               isFactorySelected={isFactorySelected}
               outputCellCost={outputCellCost}
               canAffordOutputCell={canAffordOutputCell}

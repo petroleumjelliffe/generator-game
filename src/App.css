@@ -430,6 +430,88 @@ body {
   transition: width 0.3s ease;
 }
 
+/* Output direction arrows on factory cells */
+.output-arrow {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border: 6px solid transparent;
+}
+
+/* Cardinal directions */
+.output-arrow-top {
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-bottom-color: #4ade80;
+  border-top: none;
+}
+
+.output-arrow-bottom {
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-top-color: #4ade80;
+  border-bottom: none;
+}
+
+.output-arrow-left {
+  left: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-right-color: #4ade80;
+  border-left: none;
+}
+
+.output-arrow-right {
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-left-color: #4ade80;
+  border-right: none;
+}
+
+/* Corner directions */
+.output-arrow-top-left {
+  top: 2px;
+  left: 2px;
+  border-bottom-color: #4ade80;
+  border-right-color: #4ade80;
+  border-top: none;
+  border-left: none;
+  border-width: 5px;
+}
+
+.output-arrow-top-right {
+  top: 2px;
+  right: 2px;
+  border-bottom-color: #4ade80;
+  border-left-color: #4ade80;
+  border-top: none;
+  border-right: none;
+  border-width: 5px;
+}
+
+.output-arrow-bottom-left {
+  bottom: 2px;
+  left: 2px;
+  border-top-color: #4ade80;
+  border-right-color: #4ade80;
+  border-bottom: none;
+  border-left: none;
+  border-width: 5px;
+}
+
+.output-arrow-bottom-right {
+  bottom: 2px;
+  right: 2px;
+  border-top-color: #4ade80;
+  border-left-color: #4ade80;
+  border-bottom: none;
+  border-right: none;
+  border-width: 5px;
+}
+
 .sidebar {
   width: 300px;
   background-color: #2a2a2a;
@@ -713,8 +795,13 @@ body {
 
 /* Output Cell Styles */
 .grid-cell.owned-output-cell {
-  background-color: #2a3a4a;
-  border-color: #4a6a8a;
+  background-color: #2a4a2a;
+  border: 2px dashed #4a8a4a;
+}
+
+/* Potential output cells - show thin dashed outline to indicate expandable area */
+.grid-cell.potential-output-cell {
+  border: 2px dashed #4a8a4a;
 }
 
 .output-cell-marker {
@@ -722,26 +809,24 @@ body {
   top: 2px;
   right: 2px;
   font-size: 0.75rem;
-  color: #6a9aca;
+  color: #4ade80;
   opacity: 0.6;
 }
 
 .grid-cell.purchasable-output-cell {
   background-color: #3a3a2a;
-  border-color: #6a6a3a;
-  border-style: dashed;
+  border: 2px dashed #4a8a4a;
 }
 
 .grid-cell.purchasable-output-cell.can-afford {
-  border-color: #8a8a4a;
+  border: 2px dashed #4ade80;
   cursor: pointer;
 }
 
 .grid-cell.purchasable-output-cell.can-afford:hover {
-  background-color: #4a4a3a;
-  border-color: #ffd700;
-  border-style: solid;
-  box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+  background-color: #3a5a3a;
+  border: 2px dashed #4ade80;
+  box-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
 }
 
 .grid-cell.purchasable-output-cell.cannot-afford {

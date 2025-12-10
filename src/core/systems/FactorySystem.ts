@@ -397,6 +397,11 @@ export class FactorySystem {
       savedFactory.outputOffsets = [];
     }
 
+    // Migration: Give placed factories with no output cells a default one
+    if (savedFactory.position && savedFactory.outputOffsets.length === 0) {
+      savedFactory.outputOffsets = [{ x: 0, y: 1 }]; // Default: directly below
+    }
+
     // Reset production timers to current time (old timestamps are stale)
     const factoryType = this.factoryTypes.get(savedFactory.typeId);
     if (factoryType && savedFactory.position) {

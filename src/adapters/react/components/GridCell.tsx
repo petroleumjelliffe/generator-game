@@ -21,6 +21,7 @@ interface GridCellProps {
   onLongPressCancel: () => void;
   isPurchasableOutputCell: boolean;
   isOwnedOutputCell: boolean;
+  isPotentialOutputCell: boolean;
   isFactorySelected: boolean;
   outputCellCost: number;
   canAffordOutputCell: boolean;
@@ -44,18 +45,33 @@ export function GridCell({
   onLongPressCancel,
   isPurchasableOutputCell,
   isOwnedOutputCell,
+  isPotentialOutputCell,
   isFactorySelected,
   outputCellCost,
   canAffordOutputCell,
 }: GridCellProps) {
   const handleDragStart = (e: React.DragEvent) => {
-    // Allow dragging materials
-    if (cell.materialId && !cell.inUse) {
+    // Allow dragging materials - show only icon
+    if (cell.materialId && !cell.inUse && material) {
       e.dataTransfer.effectAllowed = 'move';
       e.dataTransfer.setData('application/json', JSON.stringify(cell));
+      // Create custom drag image showing only the icon
+      const dragEl = document.createElement('div');
+      dragEl.textContent = material.icon;
+      dragEl.style.cssText = `
+        position: absolute;
+        top: -1000px;
+        left: -1000px;
+        font-size: 2rem;
+        padding: 8px;
+        background: transparent;
+      `;
+      document.body.appendChild(dragEl);
+      e.dataTransfer.setDragImage(dragEl, 24, 24);
+      requestAnimationFrame(() => document.body.removeChild(dragEl));
       onDragStart(cell);
     }
-    // Allow dragging factories
+    // Allow dragging factories - show full cell (default behavior)
     else if (cell.factoryId) {
       e.dataTransfer.effectAllowed = 'move';
       e.dataTransfer.setData('application/json', JSON.stringify(cell));
@@ -108,6 +124,7 @@ export function GridCell({
   if (isPlacementTarget) classNames.push('placement-target');
   if (isPurchasableOutputCell) classNames.push('purchasable-output-cell');
   if (isOwnedOutputCell) classNames.push('owned-output-cell');
+  if (isPotentialOutputCell && !isOwnedOutputCell) classNames.push('potential-output-cell');
   if (isPurchasableOutputCell && canAffordOutputCell) classNames.push('can-afford');
   if (isPurchasableOutputCell && !canAffordOutputCell) classNames.push('cannot-afford');
 
@@ -142,6 +159,20 @@ export function GridCell({
               style={{ width: `${factoryProgress * 100}%` }}
             />
           </div>
+          {/* Output direction indicators */}
+          {factory.outputOffsets.map((offset, i) => {
+            // Map offset to direction class
+            let dirClass = '';
+            if (offset.x === 0 && offset.y === -1) dirClass = 'output-arrow-top';
+            else if (offset.x === 0 && offset.y === 1) dirClass = 'output-arrow-bottom';
+            else if (offset.x === -1 && offset.y === 0) dirClass = 'output-arrow-left';
+            else if (offset.x === 1 && offset.y === 0) dirClass = 'output-arrow-right';
+            else if (offset.x === -1 && offset.y === -1) dirClass = 'output-arrow-top-left';
+            else if (offset.x === 1 && offset.y === -1) dirClass = 'output-arrow-top-right';
+            else if (offset.x === -1 && offset.y === 1) dirClass = 'output-arrow-bottom-left';
+            else if (offset.x === 1 && offset.y === 1) dirClass = 'output-arrow-bottom-right';
+            return dirClass ? <div key={i} className={`output-arrow ${dirClass}`} /> : null;
+          })}
         </div>
       )}
       {material && !factory && (
